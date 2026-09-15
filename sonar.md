@@ -62,19 +62,23 @@ Basic organization:
 
 ## Guiding (but not-necessarily disqualifying) requirements:
 
-- Easy to add new technologies being explored without much ceremony
-  and without prior approval!!!
-- Technology should be “adopted” through the ADR process.
-- Easy to explore new tech and assess applicability to projects.
-- Status meaning must be unambiguous
-- Metadata describes what it applies to (e.g., new projects, existing
-  projects, optional)
-- Metadata describes if migration is expected (e.g., yes, no,
-  case-by-case)
-- Items should have a history of status change, person who changed,
-  and why
-- Distinguish org-wide decisions from project-specific architectural
-  decisions.
+1. Easy to add new technologies being explored without much ceremony
+   and without prior approval!!!
+2. Technology should be “adopted” through the ADR process.
+3. Easy to explore new tech and assess applicability to projects.
+4. Status meaning must be unambiguous
+5. Metadata describes what it applies to (e.g., new projects, existing
+   projects, optional)
+6. Metadata describes if migration is expected (e.g., yes, no,
+   case-by-case)
+7. Items should have a history of status change, person who changed,
+   and why
+8. Distinguish org-wide decisions from project-specific architectural
+   decisions.
+
+Note that github issues inherently provide requirements: 1, 5, 6, 7 and 8.
+
+Github pull requests provide the basis for 2.
 
 ## Questions:
 - Do static hosting services provide authenticated access?  What about
