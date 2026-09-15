@@ -63,7 +63,7 @@ Basic organization:
 
     These labels must have names starting with "SONAR CATEGORY " but
     are otherwise unrestricted. They're displayed as slices, without
-    the the "SONAR CATEGORY " prefix, according to the number of
+    the "SONAR CATEGORY " prefix, according to the number of
     issues.  There's a default "Uncategorised" category.
 
 ## Guiding (but not-necessarily disqualifying) requirements:

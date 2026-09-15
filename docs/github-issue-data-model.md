@@ -52,8 +52,8 @@ supports `PROPOSE`. Any merged pull request in the source repository that
 cross-references the issue supports `ADOPT`. A closed, unmerged pull request
 supports neither status.
 
-Missing ADR evidence creates a displayed warning for the affected item and does
-not stop generation.
+Missing ADR evidence creates a displayed warning for the affected status
+placement and does not stop generation.
 
 ## Categories and placement
 
@@ -70,6 +70,9 @@ modification time.
 
 ## Static contract
 
+The static document identifies the source repository, records when the snapshot
+was generated, and contains the item collection.
+
 The static model stores each issue once. Each item contains:
 
 - GitHub identity: number, title, URL, state, and `updatedAt`.
@@ -78,7 +81,8 @@ The static model stores each issue once. Each item contains:
 - Derived statuses and categories.
 - Cross-referencing pull-request summaries, including number, title, URL, state,
   and merged status.
-- Structured warnings suitable for display.
+- Structured warnings suitable for display, with each ADR warning identifying
+  its affected status or placement.
 
 The UI derives repeated status-band and category-slice placements from each
 item's status and category collections.
