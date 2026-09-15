@@ -2,16 +2,16 @@
 
 The Tech Sonar provides a high-level view of technology adoption in an organization.
 
-It's inspired by the Thoughworks Tech Radar: https://www.thoughtworks.com/en-us/radar.
+It's inspired by the Thoughtworks Tech Radar: https://www.thoughtworks.com/en-us/radar.
 
 There is an initial prototype here: https://sonar.demosnotmemos.com/
 
-This implementation uses a github repository as a source of truth.
+This implementation uses a GitHub repository as a source of truth.
 
-Github actions execute code that updates a static representation.
+GitHub Actions execute code that updates a static representation.
 
 A dynamic React application provides an interactive view of the static
-data.  This static website can be depoyed to any static web hosting
+data.  This static website can be deployed to any static web hosting
 service.
 
 ## High-level design
@@ -23,7 +23,7 @@ Major components:
 - Content rendering via a TypeScript React application.
 - Deployment script(s) to deploy application to static hosting service.
 - Authenticated access to the static website.
-- Workflow implemented via github actions that update static content
+- Workflow implemented via GitHub Actions that update static content
   and deploy to static web-hosting services.
 - Python script to install against a repo
   - Labels
@@ -33,7 +33,9 @@ Major components:
 
 Basic organization:
 
-- Source content is githhub issues with labels:
+- Source content is GitHub issues with labels. See
+  [GitHub Issue Data Model](docs/github-issue-data-model.md) for source
+  semantics and the static contract. Labels include:
 
   - Status labels:
 
@@ -47,17 +49,21 @@ Basic organization:
     and SONAR ADOPT in the middle.  Bands have areas configurable as
     percentages, but of equal area by default.
 
-    SONAR PROPOSE issues must have a PR link to an unmerged
+    SONAR PROPOSE issues must have a PR link to an open
     PR against the source repository.
 
-    SONAR ADOPT issues must have a PR link to an merged
+    SONAR ADOPT issues must have a PR link to a merged
     PR against the source repository.
+
+    Open and closed issues are included. Issues without a status label
+    are ignored, so removing the status label removes an item from the
+    Sonar.
 
   - Category labels.
 
     These labels must have names starting with "SONAR CATEGORY " but
     are otherwise unrestricted. They're displayed as slices, without
-    the the "SONAR CATEGORY " prefix, according to the number of
+    the "SONAR CATEGORY " prefix, according to the number of
     issues.  There's a default "Uncategorised" category.
 
 ## Guiding (but not-necessarily disqualifying) requirements:
@@ -75,10 +81,12 @@ Basic organization:
    and why
 8. Distinguish org-wide decisions from project-specific architectural
    decisions.
+9. Items can be filtered by issue modification time.
+10. Items can be filtered by category.
 
-Note that github issues inherently provide requirements: 1, 5, 6, 7 and 8.
+Note that GitHub issues can support requirements: 1, 5, 6, 7 and 8.
 
-Github pull requests provide the basis for 2.
+GitHub pull requests provide the basis for 2.
 
 Note however that although github issues and PRs implement most of the
 requirements, how some of this information is exposed in the
@@ -86,19 +94,18 @@ application is an application concern.
 
 ## Questions:
 - Do static hosting services provide authenticated access?  What about
-  cloudflare pages?
-- Do github issues provide history?
+  Cloudflare Pages?
 
 ## Additional requirements
 
-- Python code should use type anntations.
+- Python code should use type annotations.
 
   - Types should represent domain concepts to the degree practical.
 
   - Type aliases should be used when implementing concepts with basic
-    types (e.f. `str`, `tuple[str]`
+    types (e.g. `str`, `tuple[str]`).
 
-- Typescript code should also use types/type-aliases to represent
+- TypeScript code should also use types/type-aliases to represent
   domain concept consistent with Python code.
 
 - CSS should be used to control presentation to the degree practical.
