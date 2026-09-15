@@ -80,3 +80,15 @@ Basic organization:
 - Do static hosting services provide authenticated access?  What about
   cloudflare pages?
 - Do github issues provide history?
+
+## Additional requirements
+
+- Python code should use type anntations.
+
+  - Types should represent domain concepts to the degree practical.
+
+  - Type aliases should be used when implementing concepts with basic
+    types (e.f. `str`, `tuple[str]`
+
+- Typescript code should also use types/type-aliases to represent
+  domain concept consistent with Python code.
