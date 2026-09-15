@@ -49,7 +49,7 @@ Basic organization:
     and SONAR ADOPT in the middle.  Bands have areas configurable as
     percentages, but of equal area by default.
 
-    SONAR PROPOSE issues must have a PR link to an unmerged
+    SONAR PROPOSE issues must have a PR link to an open
     PR against the source repository.
 
     SONAR ADOPT issues must have a PR link to a merged

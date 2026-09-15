@@ -76,8 +76,8 @@ The static model stores each issue once. Each item contains:
 - Rendered body HTML.
 - All labels, including name, color, and description.
 - Derived statuses and categories.
-- Cross-referencing pull-request summaries, including number, title, URL, and
-  state.
+- Cross-referencing pull-request summaries, including number, title, URL, state,
+  and merged status.
 - Structured warnings suitable for display.
 
 The UI derives repeated status-band and category-slice placements from each
