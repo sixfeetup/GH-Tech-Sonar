@@ -80,6 +80,10 @@ Note that github issues inherently provide requirements: 1, 5, 6, 7 and 8.
 
 Github pull requests provide the basis for 2.
 
+Note however that although github issues and PRs implement most of the
+requirements, how some of this information is exposed in the
+application is an application concern.
+
 ## Questions:
 - Do static hosting services provide authenticated access?  What about
   cloudflare pages?
@@ -96,3 +100,5 @@ Github pull requests provide the basis for 2.
 
 - Typescript code should also use types/type-aliases to represent
   domain concept consistent with Python code.
+
+- CSS should be used to control presentation to the degree practical.
