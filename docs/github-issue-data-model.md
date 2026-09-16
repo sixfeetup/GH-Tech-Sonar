@@ -70,19 +70,72 @@ modification time.
 
 ## Static contract
 
-The static document identifies the source repository, records when the snapshot
-was generated, and contains the item collection.
+The top-level document identifies the source repository, records when the
+snapshot was generated, and contains the item collection:
 
-The static model stores each issue once. Each item contains:
+```json
+{
+  "repository": "sixfeetup/GH-Tech-Sonar",
+  "generatedAt": "2026-09-15T20:30:00Z",
+  "items": []
+}
+```
 
-- GitHub identity: number, title, URL, state, and `updatedAt`.
-- Rendered body HTML.
-- All labels, including name, color, and description.
-- Derived statuses and categories.
-- Cross-referencing pull-request summaries, including number, title, URL, state,
-  and merged status.
-- Structured warnings suitable for display, with each ADR warning identifying
-  its affected status or placement.
+`generatedAt` is the actual UTC time at which the generator creates the
+snapshot. It is the only intentionally variable value when the source data is
+unchanged.
+
+The static model stores each issue once. An item has this shape:
+
+```json
+{
+  "number": 3,
+  "title": "Generate validated static Sonar content",
+  "url": "https://github.com/sixfeetup/GH-Tech-Sonar/issues/3",
+  "state": "OPEN",
+  "updatedAt": "2026-09-15T18:00:00Z",
+  "bodyHtml": "<p>...</p>",
+  "labels": [
+    {
+      "name": "SONAR EXPLORE",
+      "color": "ededed",
+      "description": null
+    }
+  ],
+  "statuses": ["EXPLORE"],
+  "categories": ["Uncategorised"],
+  "pullRequests": [],
+  "warnings": []
+}
+```
+
+A pull-request summary has this shape:
+
+```json
+{
+  "number": 10,
+  "title": "Approve the ADR",
+  "url": "https://github.com/sixfeetup/GH-Tech-Sonar/pull/10",
+  "state": "CLOSED",
+  "merged": true
+}
+```
+
+A warning has the keys `code`, `message`, and `status`, in that order:
+
+```json
+{
+  "code": "missing-adopt-evidence",
+  "message": "Issue 3 has ADOPT status but requires a merged pull request.",
+  "status": "ADOPT"
+}
+```
+
+Top-level and item keys remain in the order shown above. Items are ordered by
+issue number; labels and categories by name; statuses by band order (`REJECT`,
+`HOLD`, `EXPLORE`, `PROPOSE`, `ADOPT`); and pull requests by number. Warnings
+follow the same status-band order. JSON uses two-space indentation and ends
+with exactly one newline.
 
 The UI derives repeated status-band and category-slice placements from each
 item's status and category collections.
