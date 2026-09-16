@@ -244,6 +244,23 @@ def test_fetch_issues_omits_pull_requests_from_other_repositories() -> None:
     ]
 
 
+def test_fetch_issues_includes_source_repository_with_canonical_casing() -> None:
+    node = issue_node(1)
+    timeline = node["timelineItems"]
+    assert isinstance(timeline, dict)
+    timeline["nodes"] = [pull_request_node(101, "SixFeetUp/Sonar")]
+    client = github.GitHubClient(
+        "token",
+        transport=httpx.MockTransport(lambda request: issue_response(node)),
+    )
+
+    issues = client.fetch_issues(REPOSITORY)
+
+    assert [pull_request.number for pull_request in issues[0].pull_requests] == [
+        101,
+    ]
+
+
 def test_fetch_issues_deduplicates_pull_requests() -> None:
     node = issue_node(1)
     timeline = node["timelineItems"]

@@ -17,7 +17,7 @@ def gh_auth_token() -> str:
             capture_output=True,
             text=True,
         )
-    except (FileNotFoundError, subprocess.CalledProcessError) as error:
+    except (OSError, subprocess.CalledProcessError) as error:
         raise AuthenticationError(
             "set GH_TOKEN or authenticate locally with `gh auth login`",
         ) from error

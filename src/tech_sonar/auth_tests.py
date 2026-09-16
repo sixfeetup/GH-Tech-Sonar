@@ -36,3 +36,15 @@ def test_gh_auth_token_reports_command_failure(monkeypatch: pytest.MonkeyPatch) 
 
     with pytest.raises(auth.AuthenticationError, match="gh auth login"):
         auth.gh_auth_token()
+
+
+def test_gh_auth_token_reports_execution_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fail(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        raise PermissionError("permission denied")
+
+    monkeypatch.setattr(subprocess, "run", fail)
+
+    with pytest.raises(auth.AuthenticationError, match="gh auth login"):
+        auth.gh_auth_token()

@@ -96,6 +96,10 @@ class GitHubError(RuntimeError):
     pass
 
 
+def _repository_key(repository: model.Repository) -> tuple[str, str]:
+    return repository.owner.casefold(), repository.name.casefold()
+
+
 class GitHubClient:
     def __init__(
         self,
@@ -244,10 +248,11 @@ class GitHubClient:
                 ),
             )
 
+        repository_key = _repository_key(repository)
         unique_pull_requests = {
             pull_request.number: pull_request
             for pull_request in pull_requests
-            if pull_request.repository == repository
+            if _repository_key(pull_request.repository) == repository_key
         }
         return model.Issue(
             number=issue_number,
