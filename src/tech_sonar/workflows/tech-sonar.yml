@@ -1,0 +1,48 @@
+name: Tech Sonar
+
+on:
+  workflow_dispatch:
+  issues:
+    types:
+      - opened
+      - edited
+      - deleted
+      - transferred
+      - closed
+      - reopened
+      - labeled
+      - unlabeled
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+      - reopened
+      - closed
+
+concurrency:
+  group: tech-sonar-${{ github.repository }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Generate Tech Sonar data
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          uv run
+          --with
+          "tech-sonar @
+          git+https://github.com/sixfeetup/GH-Tech-Sonar.git@__TECH_SONAR_REVISION__"
+          tech-sonar generate
