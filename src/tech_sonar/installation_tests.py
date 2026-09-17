@@ -94,6 +94,7 @@ def test_render_workflow_replaces_revision_marker() -> None:
         "cancel-in-progress: false",
         "permissions",
         "astral-sh/setup-uv@v6",
+        'python-version: "3.14"',
         "tech-sonar generate",
     ):
         assert expected in workflow
