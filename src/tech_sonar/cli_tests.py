@@ -11,13 +11,16 @@ def configure_successful_generation(
     tmp_path: pathlib.Path,
     issues: tuple[model.Issue, ...] = (),
 ) -> pathlib.Path:
-    config_path = tmp_path / "sonar.toml"
-    config_path.write_text('repository = "sixfeetup/GH-Tech-Sonar"\n')
     artifact = (tmp_path / "generated" / "sonar.json").resolve()
     artifact.parent.mkdir()
     artifact.write_text("{}\n")
 
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        cli.repository,
+        "repository_at",
+        lambda path: model.Repository("sixfeetup", "GH-Tech-Sonar"),
+    )
     monkeypatch.setattr(cli.auth, "resolve_token", lambda environ: "token")
     monkeypatch.setattr(
         cli.github.GitHubClient,
@@ -50,6 +53,23 @@ def test_generate_prints_only_artifact_path(
     assert result == 0
     assert captured.out == f"{artifact}\n"
     assert captured.err == ""
+
+
+def test_generate_discovers_repository_from_current_directory(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+) -> None:
+    configure_successful_generation(monkeypatch, tmp_path)
+    discovered_paths: list[pathlib.Path] = []
+
+    def discover(path: pathlib.Path) -> model.Repository:
+        discovered_paths.append(path)
+        return model.Repository("sixfeetup", "GH-Tech-Sonar")
+
+    monkeypatch.setattr(cli.repository, "repository_at", discover)
+
+    assert cli.main(["generate"]) == 0
+    assert discovered_paths == [pathlib.Path.cwd()]
 
 
 def test_generate_prints_warnings_to_stderr(
@@ -92,7 +112,10 @@ def test_generate_prints_warnings_to_stderr(
 @pytest.mark.parametrize(
     ("error", "expected_message"),
     [
-        (cli.config.ConfigError("invalid repository"), "invalid repository"),
+        (
+            cli.repository.RepositoryError("not a GitHub repository"),
+            "not a GitHub repository",
+        ),
         (
             cli.auth.AuthenticationError("authenticate with GitHub"),
             "authenticate with GitHub",
@@ -112,8 +135,8 @@ def test_generate_reports_fatal_errors(
     def fail(*args: object, **kwargs: object) -> None:
         raise error
 
-    if isinstance(error, cli.config.ConfigError):
-        monkeypatch.setattr(cli.config, "load_config", fail)
+    if isinstance(error, cli.repository.RepositoryError):
+        monkeypatch.setattr(cli.repository, "repository_at", fail)
     elif isinstance(error, cli.auth.AuthenticationError):
         monkeypatch.setattr(cli.auth, "resolve_token", fail)
     else:

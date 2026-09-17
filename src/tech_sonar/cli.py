@@ -5,9 +5,9 @@ import pathlib
 import sys
 
 from tech_sonar import auth
-from tech_sonar import config
 from tech_sonar import generate
 from tech_sonar import github
+from tech_sonar import repository
 
 
 def parser() -> argparse.ArgumentParser:
@@ -18,12 +18,12 @@ def parser() -> argparse.ArgumentParser:
 
 
 def generate_command() -> int:
-    settings = config.load_config(pathlib.Path("sonar.toml"))
+    target = repository.repository_at(pathlib.Path.cwd())
     token = auth.resolve_token(os.environ)
     with github.GitHubClient(token) as client:
-        issues = client.fetch_issues(settings.repository)
+        issues = client.fetch_issues(target)
     snapshot = generate.build_snapshot(
-        settings.repository,
+        target,
         issues,
         generate.utc_timestamp(),
     )
@@ -45,7 +45,7 @@ def main(argv: collections.abc.Sequence[str] | None = None) -> int:
         try:
             return generate_command()
         except (
-            config.ConfigError,
+            repository.RepositoryError,
             auth.AuthenticationError,
             github.GitHubError,
             OSError,
