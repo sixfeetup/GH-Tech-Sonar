@@ -96,6 +96,8 @@ def test_render_workflow_replaces_revision_marker() -> None:
         "astral-sh/setup-uv@v6",
         'python-version: "3.14"',
         "tech-sonar generate",
+        "actions/upload-artifact@v4",
+        "retention-days: 1",
     ):
         assert expected in workflow
 

@@ -39,11 +39,20 @@ jobs:
           enable-cache: true
           python-version: "3.14"
       - name: Generate Tech Sonar data
+        id: generate
         env:
           GH_TOKEN: ${{ github.token }}
-        run: >-
-          uv run
-          --with
-          "tech-sonar @
-          git+https://github.com/sixfeetup/GH-Tech-Sonar.git@__TECH_SONAR_REVISION__"
-          tech-sonar generate
+        run: |
+          tech_sonar_url="git+https://github.com/sixfeetup/GH-Tech-Sonar.git"
+          artifact="$(
+            uv run \
+              --with "tech-sonar @ ${tech_sonar_url}@__TECH_SONAR_REVISION__" \
+              tech-sonar generate
+          )"
+          echo "artifact=$artifact" >> "$GITHUB_OUTPUT"
+      - name: Upload generated data for debugging
+        uses: actions/upload-artifact@v4
+        with:
+          name: tech-sonar-json
+          path: ${{ steps.generate.outputs.artifact }}
+          retention-days: 1
