@@ -75,6 +75,7 @@ test("filters both views by category and status", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: /^#2 / }),
   ).toHaveCount(0);
+  await expect(page.getByRole("heading", { level: 2 })).toHaveCount(2);
 
   await page
     .getByRole("combobox", { name: "Status" })
@@ -85,6 +86,7 @@ test("filters both views by category and status", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "#3 Bad tech" }),
   ).toHaveCount(0);
+  await expect(page.getByRole("heading", { level: 2 })).toHaveCount(1);
 });
 
 test("filters both views by updated date", async ({ page }) => {
