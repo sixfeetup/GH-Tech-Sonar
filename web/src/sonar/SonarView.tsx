@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 
 import type { SonarItem, Status } from "../data/sonar";
-import { layoutSonar, STATUS_ORDER, type SonarBand } from "./geometry";
+import {
+  layoutSonar,
+  STATUS_ORDER,
+  type SonarBand,
+  type SonarPlacement,
+} from "./geometry";
 
 export const STATUS_COLORS: Record<Status, string> = {
   REJECT: "#b60205",
@@ -54,7 +59,10 @@ function bandPath({ innerRadius, outerRadius }: SonarBand): string {
 export function SonarView({ items }: SonarViewProps) {
   const plotRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(DEFAULT_SIZE);
-  const [tooltip, setTooltip] = useState<string | null>(null);
+  const [hoveredPlacement, setHoveredPlacement] =
+    useState<SonarPlacement | null>(null);
+  const [focusedPlacement, setFocusedPlacement] =
+    useState<SonarPlacement | null>(null);
 
   useEffect(() => {
     const plot = plotRef.current;
@@ -72,6 +80,7 @@ export function SonarView({ items }: SonarViewProps) {
   const radius = Math.max(size / 2 - LABEL_MARGIN, 1);
   const layout = layoutSonar(items, radius);
   const center = size / 2;
+  const tooltipPlacement = hoveredPlacement ?? focusedPlacement;
 
   return (
     <section className="sonar-view" aria-label="Sonar view">
@@ -135,10 +144,10 @@ export function SonarView({ items }: SonarViewProps) {
                   className="sonar-dot"
                   href={`/#/items/${placement.number}`}
                   key={key}
-                  onBlur={() => setTooltip(null)}
-                  onFocus={() => setTooltip(placement.item.title)}
-                  onMouseEnter={() => setTooltip(placement.item.title)}
-                  onMouseLeave={() => setTooltip(null)}
+                  onBlur={() => setFocusedPlacement(null)}
+                  onFocus={() => setFocusedPlacement(placement)}
+                  onMouseEnter={() => setHoveredPlacement(placement)}
+                  onMouseLeave={() => setHoveredPlacement(null)}
                 >
                   <circle
                     cx={placement.x}
@@ -164,9 +173,9 @@ export function SonarView({ items }: SonarViewProps) {
             No Sonar items match these filters.
           </p>
         )}
-        {tooltip !== null && (
+        {tooltipPlacement !== null && (
           <div className="sonar-tooltip" role="tooltip">
-            {tooltip}
+            {tooltipPlacement.item.title}
           </div>
         )}
       </div>

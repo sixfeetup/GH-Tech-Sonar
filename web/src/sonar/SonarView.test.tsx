@@ -62,6 +62,40 @@ describe("SonarView", () => {
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
   });
 
+  it("keeps the tooltip while focus remains after mouse leave", async () => {
+    const user = userEvent.setup();
+    render(<SonarView items={snapshotFixture.items} />);
+    const link = screen.getAllByRole("link", { name: /#3 / })[0];
+
+    fireEvent.focus(link);
+    await user.hover(link);
+    await user.unhover(link);
+
+    expect(screen.getByRole("tooltip")).toHaveTextContent(
+      "Generate validated static Sonar content",
+    );
+
+    fireEvent.blur(link);
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+  });
+
+  it("keeps the tooltip while hover remains after blur", async () => {
+    const user = userEvent.setup();
+    render(<SonarView items={snapshotFixture.items} />);
+    const link = screen.getAllByRole("link", { name: /#3 / })[0];
+
+    await user.hover(link);
+    fireEvent.focus(link);
+    fireEvent.blur(link);
+
+    expect(screen.getByRole("tooltip")).toHaveTextContent(
+      "Generate validated static Sonar content",
+    );
+
+    await user.unhover(link);
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+  });
+
   it("keeps all bands visible when no items match", () => {
     const { container } = render(<SonarView items={[]} />);
 
