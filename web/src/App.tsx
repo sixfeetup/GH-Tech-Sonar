@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
+import { Route, Routes } from "react-router-dom";
 
 import { loadSnapshot, type SonarSnapshot } from "./data/sonar";
+import { ItemDetails } from "./details/ItemDetails";
 import { Filters } from "./filters/Filters";
 import {
   categoriesFor,
@@ -58,21 +60,34 @@ export function App() {
 
   return (
     <main>
-      <h1>
-        {state.snapshot.repository}: {state.snapshot.items.length} items
-      </h1>
-      <Filters
-        categories={categoriesFor(state.snapshot.items)}
-        filters={filters}
-        onFiltersChange={setFilters}
-        onViewChange={setView}
-        view={view}
-      />
-      {view === "list" ? (
-        <ListView items={filteredItems} />
-      ) : (
-        <SonarView items={filteredItems} />
-      )}
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <>
+              <h1>
+                {state.snapshot.repository}: {state.snapshot.items.length} items
+              </h1>
+              <Filters
+                categories={categoriesFor(state.snapshot.items)}
+                filters={filters}
+                onFiltersChange={setFilters}
+                onViewChange={setView}
+                view={view}
+              />
+              {view === "list" ? (
+                <ListView items={filteredItems} />
+              ) : (
+                <SonarView items={filteredItems} />
+              )}
+            </>
+          }
+        />
+        <Route
+          path="/items/:number"
+          element={<ItemDetails snapshot={state.snapshot} />}
+        />
+      </Routes>
     </main>
   );
 }

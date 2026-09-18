@@ -1,4 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
 import type { SonarItem } from "../data/sonar";
@@ -16,20 +17,28 @@ const newestItem: SonarItem = {
   warnings: [],
 };
 
+function renderListView(items: SonarItem[]) {
+  return render(
+    <MemoryRouter>
+      <ListView items={items} />
+    </MemoryRouter>,
+  );
+}
+
 describe("ListView", () => {
   it("sorts item links by descending issue number", () => {
-    render(<ListView items={[detailedItem, newestItem]} />);
+    renderListView([detailedItem, newestItem]);
 
     const itemLinks = screen.getAllByRole("link", { name: /Sonar item|static/ });
     expect(itemLinks.map((link) => link.textContent)).toEqual([
       "#8 A newer Sonar item",
       "#3 Generate validated static Sonar content",
     ]);
-    expect(itemLinks[0]).toHaveAttribute("href", "/#/items/8");
+    expect(itemLinks[0]).toHaveAttribute("href", "/items/8");
   });
 
   it("renders one row per item with all list information", () => {
-    render(<ListView items={[detailedItem]} />);
+    renderListView([detailedItem]);
 
     expect(
       screen.getAllByRole("link", {
@@ -53,7 +62,7 @@ describe("ListView", () => {
   });
 
   it("renders an empty result message", () => {
-    render(<ListView items={[]} />);
+    renderListView([]);
 
     expect(
       screen.getByText("No Sonar items match these filters."),

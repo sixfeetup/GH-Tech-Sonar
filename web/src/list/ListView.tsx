@@ -1,4 +1,5 @@
 import type { SonarItem } from "../data/sonar";
+import { ItemLink } from "../details/ItemLink";
 
 interface ListViewProps {
   items: SonarItem[];
@@ -17,9 +18,9 @@ export function ListView({ items }: ListViewProps) {
         <li key={item.number}>
           <article>
             <h2>
-              <a href={`/#/items/${item.number}`}>
+              <ItemLink number={item.number}>
                 #{item.number} {item.title}
-              </a>
+              </ItemLink>
             </h2>
             <dl className="item-metadata">
               <div>

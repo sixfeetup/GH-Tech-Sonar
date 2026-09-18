@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import type { SonarItem, Status } from "../data/sonar";
+import { ItemLink } from "../details/ItemLink";
 import {
   layoutSonar,
   STATUS_ORDER,
@@ -139,11 +140,11 @@ export function SonarView({ items }: SonarViewProps) {
               ].join("-");
               const accessibleName = `#${placement.number} ${placement.item.title} — ${placement.status}, ${placement.category}`;
               return (
-                <a
+                <ItemLink
                   aria-label={accessibleName}
                   className="sonar-dot"
-                  href={`/#/items/${placement.number}`}
                   key={key}
+                  number={placement.number}
                   onBlur={() => setFocusedPlacement(null)}
                   onFocus={() => setFocusedPlacement(placement)}
                   onMouseEnter={() => setHoveredPlacement(placement)}
@@ -163,7 +164,7 @@ export function SonarView({ items }: SonarViewProps) {
                   >
                     {placement.number}
                   </text>
-                </a>
+                </ItemLink>
               );
             })}
           </g>

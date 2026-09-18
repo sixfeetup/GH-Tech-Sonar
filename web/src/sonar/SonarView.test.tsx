@@ -1,16 +1,24 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
+import type { SonarItem } from "../data/sonar";
 import { snapshotFixture } from "../test/fixtures";
 import { STATUS_ORDER } from "./geometry";
 import { SonarView } from "./SonarView";
 
+function renderSonarView(items: SonarItem[] = snapshotFixture.items) {
+  return render(
+    <MemoryRouter>
+      <SonarView items={items} />
+    </MemoryRouter>,
+  );
+}
+
 describe("SonarView", () => {
   it("renders status bands, their key, and category guides", () => {
-    const { container } = render(
-      <SonarView items={snapshotFixture.items} />,
-    );
+    const { container } = renderSonarView();
 
     expect(container.querySelectorAll("[data-status-band]")).toHaveLength(5);
 
@@ -28,21 +36,21 @@ describe("SonarView", () => {
   });
 
   it("renders every visual placement as an accessible numbered link", () => {
-    render(<SonarView items={snapshotFixture.items} />);
+    renderSonarView();
 
     const links = screen.getAllByRole("link", {
       name: /#3 Generate validated static Sonar content/,
     });
     expect(links).toHaveLength(4);
     for (const link of links) {
-      expect(link).toHaveAttribute("href", "/#/items/3");
+      expect(link).toHaveAttribute("href", "/items/3");
       expect(within(link).getByText("3")).toBeInTheDocument();
     }
   });
 
   it("shows one title tooltip for hover and focus", async () => {
     const user = userEvent.setup();
-    render(<SonarView items={snapshotFixture.items} />);
+    renderSonarView();
     const link = screen.getAllByRole("link", { name: /#3 / })[0];
 
     await user.hover(link);
@@ -64,7 +72,7 @@ describe("SonarView", () => {
 
   it("keeps the tooltip while focus remains after mouse leave", async () => {
     const user = userEvent.setup();
-    render(<SonarView items={snapshotFixture.items} />);
+    renderSonarView();
     const link = screen.getAllByRole("link", { name: /#3 / })[0];
 
     fireEvent.focus(link);
@@ -81,7 +89,7 @@ describe("SonarView", () => {
 
   it("keeps the tooltip while hover remains after blur", async () => {
     const user = userEvent.setup();
-    render(<SonarView items={snapshotFixture.items} />);
+    renderSonarView();
     const link = screen.getAllByRole("link", { name: /#3 / })[0];
 
     await user.hover(link);
@@ -97,7 +105,7 @@ describe("SonarView", () => {
   });
 
   it("keeps all bands visible when no items match", () => {
-    const { container } = render(<SonarView items={[]} />);
+    const { container } = renderSonarView([]);
 
     expect(container.querySelectorAll("[data-status-band]")).toHaveLength(5);
     expect(

@@ -6,9 +6,12 @@
 
 body {
   margin: 0;
+  overflow-wrap: anywhere;
 }
 
 main {
+  box-sizing: border-box;
+  width: 100%;
   max-width: 72rem;
   margin: 0 auto;
   padding: 2rem;
@@ -46,6 +49,7 @@ select {
 
 .controls input,
 .controls select {
+  max-width: 100%;
   padding: 0.4rem 0.6rem;
 }
 
@@ -97,7 +101,7 @@ select {
 .sonar-svg {
   display: block;
   width: 100%;
-  height: 100%;
+  height: auto;
 }
 
 .sonar-band {
@@ -206,6 +210,14 @@ select {
 }
 
 @media (max-width: 47.99rem) {
+  main {
+    padding: 1rem;
+  }
+
+  .controls > * {
+    min-width: 0;
+  }
+
   .sonar-view {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -247,4 +259,31 @@ select {
 
 .warnings {
   font-weight: 600;
+}
+
+.item-details {
+  min-width: 0;
+}
+
+.item-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.item-body {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.item-body img,
+.item-body video {
+  max-width: 100%;
+  height: auto;
+}
+
+.item-body pre {
+  max-width: 100%;
+  overflow-x: auto;
 }
