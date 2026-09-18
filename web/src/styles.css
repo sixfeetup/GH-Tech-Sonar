@@ -74,11 +74,146 @@ select {
   list-style: none;
 }
 
-.sonar-list article,
-.sonar-placeholder {
+.sonar-list article {
   border: 1px solid #d0d7de;
   border-radius: 0.4rem;
   padding: 1rem;
+}
+
+.sonar-view {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: start;
+  margin-top: 1rem;
+}
+
+.sonar-plot {
+  position: relative;
+  min-width: 0;
+  aspect-ratio: 1;
+}
+
+.sonar-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.sonar-band {
+  stroke: #ffffff;
+  stroke-width: 1;
+}
+
+.sonar-band[data-status-band="ADOPT"] {
+  fill: #d8f3dc;
+}
+
+.sonar-band[data-status-band="PROPOSE"] {
+  fill: #fff3bf;
+}
+
+.sonar-band[data-status-band="EXPLORE"] {
+  fill: #dbeafe;
+}
+
+.sonar-band[data-status-band="HOLD"] {
+  fill: #eaeef2;
+}
+
+.sonar-band[data-status-band="REJECT"] {
+  fill: #ffe3e3;
+}
+
+.category-separator {
+  stroke: #57606a;
+  stroke-width: 1;
+}
+
+.category-label {
+  fill: #24292f;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.sonar-dot circle {
+  fill: #24292f;
+  stroke: #ffffff;
+  stroke-width: 2;
+}
+
+.sonar-dot text {
+  fill: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.sonar-dot:focus {
+  outline: none;
+}
+
+.sonar-dot:focus circle,
+.sonar-dot:hover circle {
+  stroke: #0969da;
+  stroke-width: 4;
+}
+
+.sonar-key {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px solid #d0d7de;
+  border-radius: 0.4rem;
+  background: #ffffff;
+  list-style: none;
+  font-weight: 600;
+}
+
+.sonar-key li {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.sonar-key-swatch {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+}
+
+.sonar-empty,
+.sonar-tooltip {
+  position: absolute;
+  left: 50%;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d0d7de;
+  border-radius: 0.3rem;
+  background: #ffffff;
+  transform: translateX(-50%);
+}
+
+.sonar-empty {
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.sonar-tooltip {
+  bottom: 0.5rem;
+  box-shadow: 0 0.25rem 0.75rem rgb(31 35 40 / 15%);
+}
+
+@media (max-width: 47.99rem) {
+  .sonar-view {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sonar-key {
+    grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+    grid-row: 1;
+  }
 }
 
 .sonar-list h2 {

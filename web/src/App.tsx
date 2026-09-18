@@ -10,6 +10,7 @@ import {
   type ViewMode,
 } from "./filters/filtering";
 import { ListView } from "./list/ListView";
+import { SonarView } from "./sonar/SonarView";
 
 type LoadState =
   | { status: "loading" }
@@ -70,10 +71,7 @@ export function App() {
       {view === "list" ? (
         <ListView items={filteredItems} />
       ) : (
-        <section className="sonar-placeholder">
-          <h2>Sonar</h2>
-          <p>Sonar visualization coming soon.</p>
-        </section>
+        <SonarView items={filteredItems} />
       )}
     </main>
   );
