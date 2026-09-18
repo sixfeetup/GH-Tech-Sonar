@@ -24,6 +24,26 @@ jobs:
           enable-cache: true
       - run: uv sync --locked --dev
       - run: uv run pytest
+      - name: Verify packaged web application
+        run: |
+          uv build --out-dir "$RUNNER_TEMP/dist"
+          WHEEL="$(find "$RUNNER_TEMP/dist" -name '*.whl' -print -quit)" \
+            python3 - <<'PY'
+          import os
+          import zipfile
+
+          required = {
+              "tech_sonar/web/index.html",
+              "tech_sonar/web/package.json",
+              "tech_sonar/web/package-lock.json",
+              "tech_sonar/web/src/main.tsx",
+              "tech_sonar/web/vite.config.ts",
+          }
+          with zipfile.ZipFile(os.environ["WHEEL"]) as wheel:
+              missing = required.difference(wheel.namelist())
+          if missing:
+              raise SystemExit(f"wheel is missing web resources: {sorted(missing)}")
+          PY
 
   web:
     runs-on: ubuntu-latest

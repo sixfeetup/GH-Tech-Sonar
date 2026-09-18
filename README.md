@@ -45,6 +45,35 @@ Label changes take effect immediately and are not rolled back if a later step
 fails. Existing labels are preserved, including their colors and descriptions.
 Category labels are created and maintained manually.
 
+## Configure publishing
+
+Configure the target repository with the Cloudflare account and Pages project:
+
+```console
+gh variable set PUBLISH_ARGS \
+  --repo OWNER/REPOSITORY \
+  --body 'cloudflare ACCOUNT_ID PROJECT'
+gh secret set PUBLISH_SECRET --repo OWNER/REPOSITORY
+```
+
+Enter the Cloudflare API token interactively when setting `PUBLISH_SECRET`. The
+API token needs Account / Cloudflare Pages / Edit permission for the specified
+account. `PUBLISH_ARGS` is parsed as shell-style arguments.
+
+Before publishing, the operator must ensure that:
+
+- the Pages project already exists;
+- its production domain is configured;
+- its Cloudflare Access application and policy already protect the site.
+
+Every successful managed action currently publishes the site. Missing
+publishing configuration fails the action. The assembled site is retained for
+one day as the `tech-sonar-site` artifact for debugging, including after a
+deployment failure.
+
+Install and update do not create `PUBLISH_ARGS`, `PUBLISH_SECRET`, the Pages
+project, its domain, or its Access application and policy.
+
 ## Update Tech Sonar
 
 Run updates from the installed target repository checkout. Until Tech Sonar is
@@ -65,8 +94,6 @@ non-default branch, it updates that branch and either updates its existing pull
 request or opens one against the default branch. Install and update fail when
 the target worktree is dirty. A no-op update creates no commit, push, or pull
 request, though it may already have created missing labels.
-
-The initial workflow generates a snapshot but does not deploy it.
 
 ## Generate a snapshot
 
