@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import type { SonarItem } from "../data/sonar";
 import { snapshotFixture } from "../test/fixtures";
-import { layoutSonar, STATUS_ORDER } from "./geometry";
+import {
+  layoutSonar,
+  STATUS_ORDER,
+  type SonarPlacement,
+} from "./geometry";
 
 const baseItem = snapshotFixture.items[0];
 const items: SonarItem[] = [
@@ -23,6 +27,27 @@ const items: SonarItem[] = [
 function normalizedAngle(x: number, y: number): number {
   const degrees = (Math.atan2(y, x) * 180) / Math.PI;
   return degrees < 0 ? degrees + 360 : degrees;
+}
+
+function expectNoCellOverlaps(placements: SonarPlacement[]): void {
+  for (const [index, first] of placements.entries()) {
+    for (const second of placements.slice(index + 1)) {
+      if (
+        first.status !== second.status ||
+        first.category !== second.category
+      ) {
+        continue;
+      }
+
+      const centerDistance = Math.hypot(
+        first.x - second.x,
+        first.y - second.y,
+      );
+      expect(centerDistance).toBeGreaterThanOrEqual(
+        first.radius + second.radius,
+      );
+    }
+  }
 }
 
 describe("layoutSonar", () => {
@@ -122,23 +147,21 @@ describe("layoutSonar", () => {
   it("does not overlap dots within a cell", () => {
     const { placements } = layoutSonar(items, 200);
 
-    for (const [index, first] of placements.entries()) {
-      for (const second of placements.slice(index + 1)) {
-        if (
-          first.status !== second.status ||
-          first.category !== second.category
-        ) {
-          continue;
-        }
+    expectNoCellOverlaps(placements);
+  });
 
-        const centerDistance = Math.hypot(
-          first.x - second.x,
-          first.y - second.y,
-        );
-        expect(centerDistance).toBeGreaterThanOrEqual(
-          first.radius + second.radius,
-        );
-      }
-    }
+  it("does not overlap dense dots in the innermost band", () => {
+    const denseItems: SonarItem[] = Array.from(
+      { length: 10 },
+      (_, index) => ({
+        ...baseItem,
+        number: index + 1,
+        statuses: ["ADOPT"],
+        categories: ["AI"],
+      }),
+    );
+    const { placements } = layoutSonar(denseItems, 100);
+
+    expectNoCellOverlaps(placements);
   });
 });

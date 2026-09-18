@@ -160,6 +160,22 @@ function chooseSlotGrid(
   return bestGrid!;
 }
 
+function minimumOccupiedSpacing(
+  grid: SlotGrid,
+  band: SonarBand,
+  category: CategorySlice,
+): number {
+  const innerRowRadius = band.innerRadius + grid.radialSpacing / 2;
+  const angularSlotWidth =
+    (category.endAngle - category.startAngle) / grid.columns;
+  const halfSlotRadians = Math.min(
+    (angularSlotWidth * Math.PI) / 360,
+    Math.PI / 2,
+  );
+  const innerRowChord = 2 * innerRowRadius * Math.sin(halfSlotRadians);
+  return Math.min(grid.radialSpacing, innerRowChord);
+}
+
 function placeCell(
   placements: ExpandedPlacement[],
   band: SonarBand,
@@ -173,7 +189,7 @@ function placeCell(
     (category.endAngle - category.startAngle) / grid.columns;
   const dotRadius = Math.min(
     15,
-    0.32 * Math.min(grid.radialSpacing, grid.angularSpacing),
+    0.32 * minimumOccupiedSpacing(grid, band, category),
   );
 
   return sortedPlacements.map((placement, index) => {
