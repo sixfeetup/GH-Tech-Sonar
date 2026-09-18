@@ -3,7 +3,131 @@ import pathlib
 import pytest
 
 from tech_sonar import cli
+from tech_sonar import installation
 from tech_sonar import model
+
+
+def test_parser_accepts_install_repository() -> None:
+    arguments = cli.parser().parse_args(
+        ["install", "sixfeetup/GH-Tech-Sonar"],
+    )
+    assert arguments.command == "install"
+    assert arguments.repository == model.Repository(
+        "sixfeetup",
+        "GH-Tech-Sonar",
+    )
+
+
+def test_parser_rejects_invalid_install_repository(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    with pytest.raises(SystemExit) as error:
+        cli.parser().parse_args(["install", "GH-Tech-Sonar"])
+
+    assert error.value.code == 2
+    assert "repository must use OWNER/REPOSITORY form" in capsys.readouterr().err
+
+
+def test_install_prints_pull_request_url(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    calls: list[tuple[model.Repository, pathlib.Path, pathlib.Path]] = []
+
+    def install(
+        target: model.Repository,
+        parent: pathlib.Path,
+        source_root: pathlib.Path,
+    ) -> str:
+        calls.append((target, parent, source_root))
+        return "https://github.com/o/r/pull/1"
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(cli.installation, "install", install)
+
+    assert cli.main(["install", "sixfeetup/GH-Tech-Sonar"]) == 0
+    assert capsys.readouterr().out == "https://github.com/o/r/pull/1\n"
+    assert calls == [
+        (
+            model.Repository("sixfeetup", "GH-Tech-Sonar"),
+            tmp_path,
+            pathlib.Path(cli.__file__).resolve().parents[2],
+        ),
+    ]
+
+
+def test_update_prints_pull_request_url(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    calls: list[tuple[pathlib.Path, pathlib.Path]] = []
+
+    def update(
+        target_root: pathlib.Path,
+        source_root: pathlib.Path,
+    ) -> str:
+        calls.append((target_root, source_root))
+        return "https://github.com/o/r/pull/1"
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(cli.installation, "update", update)
+
+    assert cli.main(["update"]) == 0
+    assert capsys.readouterr().out.endswith("/pull/1\n")
+    assert calls == [
+        (
+            tmp_path,
+            pathlib.Path(cli.__file__).resolve().parents[2],
+        ),
+    ]
+
+
+def test_no_op_update_prints_nothing(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setattr(
+        cli.installation,
+        "update",
+        lambda target_root, source_root: None,
+    )
+
+    assert cli.main(["update"]) == 0
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err == ""
+
+
+@pytest.mark.parametrize(
+    ("command", "error"),
+    [
+        (
+            ["install", "sixfeetup/GH-Tech-Sonar"],
+            installation.InstallationError("installation failed"),
+        ),
+        (
+            ["update"],
+            cli.repository.RepositoryError("repository failed"),
+        ),
+    ],
+)
+def test_installation_commands_report_expected_errors(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    command: list[str],
+    error: Exception,
+) -> None:
+    def fail(*args: object, **kwargs: object) -> None:
+        raise error
+
+    monkeypatch.setattr(cli.installation, command[0], fail)
+
+    assert cli.main(command) == 1
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err == f"error: {error}\n"
 
 
 def configure_successful_generation(
@@ -11,13 +135,16 @@ def configure_successful_generation(
     tmp_path: pathlib.Path,
     issues: tuple[model.Issue, ...] = (),
 ) -> pathlib.Path:
-    config_path = tmp_path / "sonar.toml"
-    config_path.write_text('repository = "sixfeetup/GH-Tech-Sonar"\n')
     artifact = (tmp_path / "generated" / "sonar.json").resolve()
     artifact.parent.mkdir()
     artifact.write_text("{}\n")
 
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        cli.repository,
+        "repository_at",
+        lambda path: model.Repository("sixfeetup", "GH-Tech-Sonar"),
+    )
     monkeypatch.setattr(cli.auth, "resolve_token", lambda environ: "token")
     monkeypatch.setattr(
         cli.github.GitHubClient,
@@ -50,6 +177,23 @@ def test_generate_prints_only_artifact_path(
     assert result == 0
     assert captured.out == f"{artifact}\n"
     assert captured.err == ""
+
+
+def test_generate_discovers_repository_from_current_directory(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+) -> None:
+    configure_successful_generation(monkeypatch, tmp_path)
+    discovered_paths: list[pathlib.Path] = []
+
+    def discover(path: pathlib.Path) -> model.Repository:
+        discovered_paths.append(path)
+        return model.Repository("sixfeetup", "GH-Tech-Sonar")
+
+    monkeypatch.setattr(cli.repository, "repository_at", discover)
+
+    assert cli.main(["generate"]) == 0
+    assert discovered_paths == [pathlib.Path.cwd()]
 
 
 def test_generate_prints_warnings_to_stderr(
@@ -92,7 +236,10 @@ def test_generate_prints_warnings_to_stderr(
 @pytest.mark.parametrize(
     ("error", "expected_message"),
     [
-        (cli.config.ConfigError("invalid repository"), "invalid repository"),
+        (
+            cli.repository.RepositoryError("not a GitHub repository"),
+            "not a GitHub repository",
+        ),
         (
             cli.auth.AuthenticationError("authenticate with GitHub"),
             "authenticate with GitHub",
@@ -112,8 +259,8 @@ def test_generate_reports_fatal_errors(
     def fail(*args: object, **kwargs: object) -> None:
         raise error
 
-    if isinstance(error, cli.config.ConfigError):
-        monkeypatch.setattr(cli.config, "load_config", fail)
+    if isinstance(error, cli.repository.RepositoryError):
+        monkeypatch.setattr(cli.repository, "repository_at", fail)
     elif isinstance(error, cli.auth.AuthenticationError):
         monkeypatch.setattr(cli.auth, "resolve_token", fail)
     else:
