@@ -14,6 +14,102 @@ main {
   padding: 2rem;
 }
 
-button {
+button,
+input,
+select {
   font: inherit;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: end;
+  padding: 1rem 0;
+}
+
+.controls label {
+  display: grid;
+  gap: 0.25rem;
+  font-weight: 600;
+}
+
+.controls input,
+.controls select,
+.view-toggle button {
+  box-sizing: border-box;
+  min-height: 2.5rem;
+  border: 1px solid #8c959f;
+  background: #ffffff;
+  color: inherit;
+}
+
+.controls input,
+.controls select {
+  padding: 0.4rem 0.6rem;
+}
+
+.view-toggle {
+  display: flex;
+}
+
+.view-toggle button {
+  padding: 0.4rem 0.8rem;
+}
+
+.view-toggle button + button {
+  border-left: 0;
+}
+
+.view-toggle button[aria-pressed="true"] {
+  background: #24292f;
+  color: #ffffff;
+}
+
+.sonar-list {
+  display: grid;
+  gap: 1rem;
+  margin: 1rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sonar-list article,
+.sonar-placeholder {
+  border: 1px solid #d0d7de;
+  border-radius: 0.4rem;
+  padding: 1rem;
+}
+
+.sonar-list h2 {
+  margin-top: 0;
+  font-size: 1.2rem;
+}
+
+.item-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.item-metadata div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.item-metadata dt {
+  font-weight: 600;
+}
+
+.item-metadata dd {
+  margin: 0;
+}
+
+.warnings,
+.pull-requests {
+  padding-left: 1.5rem;
+}
+
+.warnings {
+  font-weight: 600;
 }
