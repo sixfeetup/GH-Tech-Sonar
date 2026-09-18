@@ -1,0 +1,289 @@
+:root {
+  color: #24292f;
+  background: #ffffff;
+  font-family: system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+main {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: end;
+  padding: 1rem 0;
+}
+
+.controls label {
+  display: grid;
+  gap: 0.25rem;
+  font-weight: 600;
+}
+
+.controls input,
+.controls select,
+.view-toggle button {
+  box-sizing: border-box;
+  min-height: 2.5rem;
+  border: 1px solid #8c959f;
+  background: #ffffff;
+  color: inherit;
+}
+
+.controls input,
+.controls select {
+  max-width: 100%;
+  padding: 0.4rem 0.6rem;
+}
+
+.view-toggle {
+  display: flex;
+}
+
+.view-toggle button {
+  padding: 0.4rem 0.8rem;
+}
+
+.view-toggle button + button {
+  border-left: 0;
+}
+
+.view-toggle button[aria-pressed="true"] {
+  background: #24292f;
+  color: #ffffff;
+}
+
+.sonar-list {
+  display: grid;
+  gap: 1rem;
+  margin: 1rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sonar-list article {
+  border: 1px solid #d0d7de;
+  border-radius: 0.4rem;
+  padding: 1rem;
+}
+
+.sonar-view {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: start;
+  margin-top: 1rem;
+}
+
+.sonar-plot {
+  position: relative;
+  min-width: 0;
+  aspect-ratio: 1;
+}
+
+.sonar-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.sonar-band {
+  stroke: #ffffff;
+  stroke-width: 1;
+}
+
+.sonar-band[data-status-band="ADOPT"] {
+  fill: #d8f3dc;
+}
+
+.sonar-band[data-status-band="PROPOSE"] {
+  fill: #fff3bf;
+}
+
+.sonar-band[data-status-band="EXPLORE"] {
+  fill: #dbeafe;
+}
+
+.sonar-band[data-status-band="HOLD"] {
+  fill: #eaeef2;
+}
+
+.sonar-band[data-status-band="REJECT"] {
+  fill: #ffe3e3;
+}
+
+.category-separator {
+  stroke: #57606a;
+  stroke-width: 1;
+}
+
+.category-label {
+  fill: #24292f;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.sonar-dot circle {
+  fill: #24292f;
+  stroke: #ffffff;
+  stroke-width: 2;
+}
+
+.sonar-dot text {
+  fill: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.sonar-dot:focus {
+  outline: none;
+}
+
+.sonar-dot:focus circle,
+.sonar-dot:hover circle {
+  stroke: #0969da;
+  stroke-width: 4;
+}
+
+.sonar-key {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px solid #d0d7de;
+  border-radius: 0.4rem;
+  background: #ffffff;
+  list-style: none;
+  font-weight: 600;
+}
+
+.sonar-key li {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.sonar-key-swatch {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+}
+
+.sonar-empty,
+.sonar-tooltip {
+  position: absolute;
+  left: 50%;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d0d7de;
+  border-radius: 0.3rem;
+  background: #ffffff;
+  transform: translateX(-50%);
+}
+
+.sonar-empty {
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.sonar-tooltip {
+  bottom: 0.5rem;
+  box-shadow: 0 0.25rem 0.75rem rgb(31 35 40 / 15%);
+}
+
+@media (max-width: 47.99rem) {
+  main {
+    padding: 1rem;
+  }
+
+  .controls > * {
+    min-width: 0;
+  }
+
+  .sonar-view {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sonar-key {
+    grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+    grid-row: 1;
+  }
+}
+
+.sonar-list h2 {
+  margin-top: 0;
+  font-size: 1.2rem;
+}
+
+.item-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.item-metadata div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.item-metadata dt {
+  font-weight: 600;
+}
+
+.item-metadata dd {
+  margin: 0;
+}
+
+.warnings,
+.pull-requests {
+  padding-left: 1.5rem;
+}
+
+.warnings {
+  font-weight: 600;
+}
+
+.item-details {
+  min-width: 0;
+}
+
+.item-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.item-body {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.item-body img,
+.item-body video {
+  max-width: 100%;
+  height: auto;
+}
+
+.item-body pre {
+  max-width: 100%;
+  overflow-x: auto;
+}
