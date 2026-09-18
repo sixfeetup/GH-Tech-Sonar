@@ -30,7 +30,7 @@ permissions:
   pull-requests: read
 
 jobs:
-  tech-sonar:
+  update-tech-sonar:
     runs-on: ubuntu-latest
     env:
       TECH_SONAR_PACKAGE: >-
