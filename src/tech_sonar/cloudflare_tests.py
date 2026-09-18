@@ -32,6 +32,7 @@ def test_publish_uses_locked_wrangler_and_translates_environment(
             (
                 "npm",
                 "exec",
+                "--",
                 "wrangler",
                 "pages",
                 "deploy",

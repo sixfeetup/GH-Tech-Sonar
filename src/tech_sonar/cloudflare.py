@@ -59,6 +59,7 @@ def publish(
         (
             "npm",
             "exec",
+            "--",
             "wrangler",
             "pages",
             "deploy",
