@@ -1,0 +1,215 @@
+{
+  "repository": "sixfeetup/GH-Tech-Sonar-Test",
+  "generatedAt": "2026-09-18T17:25:56.027330Z",
+  "items": [
+    {
+      "number": 2,
+      "title": "Neat tech",
+      "url": "https://github.com/sixfeetup/GH-Tech-Sonar-Test/issues/2",
+      "state": "OPEN",
+      "updatedAt": "2026-09-17T23:35:36Z",
+      "bodyHtml": "<h3 dir=\"auto\">\ud83d\udd2d Task Overview</h3>\n<p dir=\"auto\"><em>No response</em></p>\n<h3 dir=\"auto\">\ud83c\udfaf Objectives</h3>\n<p dir=\"auto\"><em>No response</em></p>\n<h3 dir=\"auto\">\ud83d\udd2c Steps or Implementation Details</h3>\n<p dir=\"auto\"><em>No response</em></p>\n<h3 dir=\"auto\">\ud83d\udcdd Additional context (Optional)</h3>\n<p dir=\"auto\">Add any relevant notes, links, or context (e.g., related issues, dependencies, or design documents).</p>\n<h3 dir=\"auto\">\ud83d\udd78\ufe0f Dependencies (Optional)</h3>\n<p dir=\"auto\"><em>No response</em></p>",
+      "labels": [
+        {
+          "name": "SONAR EXPLORE",
+          "color": "1D76DB",
+          "description": "Explore and evaluate this technology."
+        }
+      ],
+      "statuses": [
+        "EXPLORE"
+      ],
+      "categories": [
+        "Uncategorised"
+      ],
+      "pullRequests": [],
+      "warnings": []
+    },
+    {
+      "number": 3,
+      "title": "Bad tech",
+      "url": "https://github.com/sixfeetup/GH-Tech-Sonar-Test/issues/3",
+      "state": "OPEN",
+      "updatedAt": "2026-09-18T17:24:39Z",
+      "bodyHtml": "<h3 dir=\"auto\">\ud83d\udd2d Task Overview</h3>\n<p dir=\"auto\"><em>No response</em></p>\n<h3 dir=\"auto\">\ud83c\udfaf Objectives</h3>\n<p dir=\"auto\"><em>No response</em></p>\n<h3 dir=\"auto\">\ud83d\udd2c Steps or Implementation Details</h3>\n<p dir=\"auto\"><em>No response</em></p>\n<h3 dir=\"auto\">\ud83d\udcdd Additional context (Optional)</h3>\n<p dir=\"auto\">Add any relevant notes, links, or context (e.g., related issues, dependencies, or design documents).</p>\n<h3 dir=\"auto\">\ud83d\udd78\ufe0f Dependencies (Optional)</h3>\n<p dir=\"auto\"><em>No response</em></p>",
+      "labels": [
+        {
+          "name": "SONAR CATEGORY AI",
+          "color": "65435f",
+          "description": ""
+        },
+        {
+          "name": "SONAR REJECT",
+          "color": "B60205",
+          "description": "Do not use this technology."
+        }
+      ],
+      "statuses": [
+        "REJECT"
+      ],
+      "categories": [
+        "AI"
+      ],
+      "pullRequests": [],
+      "warnings": []
+    },
+    {
+      "number": 4,
+      "title": "Meh tech",
+      "url": "https://github.com/sixfeetup/GH-Tech-Sonar-Test/issues/4",
+      "state": "OPEN",
+      "updatedAt": "2026-09-18T17:24:15Z",
+      "bodyHtml": "<h3 dir=\"auto\">\ud83d\udd2d Task Overview</h3>\n<p dir=\"auto\"><em>No response</em></p>\n<h3 dir=\"auto\">\ud83c\udfaf Objectives</h3>\n<p dir=\"auto\"><em>No response</em></p>\n<h3 dir=\"auto\">\ud83d\udd2c Steps or Implementation Details</h3>\n<p dir=\"auto\"><em>No response</em></p>\n<h3 dir=\"auto\">\ud83d\udcdd Additional context (Optional)</h3>\n<p dir=\"auto\">Add any relevant notes, links, or context (e.g., related issues, dependencies, or design documents).</p>\n<h3 dir=\"auto\">\ud83d\udd78\ufe0f Dependencies (Optional)</h3>\n<p dir=\"auto\"><em>No response</em></p>",
+      "labels": [
+        {
+          "name": "SONAR CATEGORY AI",
+          "color": "65435f",
+          "description": ""
+        },
+        {
+          "name": "SONAR HOLD",
+          "color": "6A737D",
+          "description": "Pause adoption pending further review."
+        }
+      ],
+      "statuses": [
+        "HOLD"
+      ],
+      "categories": [
+        "AI"
+      ],
+      "pullRequests": [],
+      "warnings": []
+    },
+    {
+      "number": 5,
+      "title": "We should do this",
+      "url": "https://github.com/sixfeetup/GH-Tech-Sonar-Test/issues/5",
+      "state": "OPEN",
+      "updatedAt": "2026-09-17T23:37:54Z",
+      "bodyHtml": "<h3 dir=\"auto\">\ud83d\udd2d Task Overview</h3>\n<p dir=\"auto\"><em>No response</em></p>\n<h3 dir=\"auto\">\ud83c\udfaf Objectives</h3>\n<p dir=\"auto\"><em>No response</em></p>\n<h3 dir=\"auto\">\ud83d\udd2c Steps or Implementation Details</h3>\n<p dir=\"auto\"><em>No response</em></p>\n<h3 dir=\"auto\">\ud83d\udcdd Additional context (Optional)</h3>\n<p dir=\"auto\">Add any relevant notes, links, or context (e.g., related issues, dependencies, or design documents).</p>\n<h3 dir=\"auto\">\ud83d\udd78\ufe0f Dependencies (Optional)</h3>\n<p dir=\"auto\"><em>No response</em></p>",
+      "labels": [
+        {
+          "name": "SONAR PROPOSE",
+          "color": "FBCA04",
+          "description": "Proposed for adoption; requires an open supporting PR."
+        }
+      ],
+      "statuses": [
+        "PROPOSE"
+      ],
+      "categories": [
+        "Uncategorised"
+      ],
+      "pullRequests": [
+        {
+          "number": 8,
+          "title": "Change 'Happy' to 'Glad' in README",
+          "url": "https://github.com/sixfeetup/GH-Tech-Sonar-Test/pull/8",
+          "state": "OPEN",
+          "merged": false
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "number": 6,
+      "title": "do this",
+      "url": "https://github.com/sixfeetup/GH-Tech-Sonar-Test/issues/6",
+      "state": "CLOSED",
+      "updatedAt": "2026-09-18T17:25:09Z",
+      "bodyHtml": "<h3 dir=\"auto\">\ud83d\udd2d Task Overview</h3>\n<p dir=\"auto\"><em>No response</em></p>\n<h3 dir=\"auto\">\ud83c\udfaf Objectives</h3>\n<p dir=\"auto\"><em>No response</em></p>\n<h3 dir=\"auto\">\ud83d\udd2c Steps or Implementation Details</h3>\n<p dir=\"auto\"><em>No response</em></p>\n<h3 dir=\"auto\">\ud83d\udcdd Additional context (Optional)</h3>\n<p dir=\"auto\">Add any relevant notes, links, or context (e.g., related issues, dependencies, or design documents).</p>\n<h3 dir=\"auto\">\ud83d\udd78\ufe0f Dependencies (Optional)</h3>\n<p dir=\"auto\"><em>No response</em></p>",
+      "labels": [
+        {
+          "name": "SONAR ADOPT",
+          "color": "0E8A16",
+          "description": "Approved for adoption; requires a merged supporting PR."
+        },
+        {
+          "name": "SONAR CATEGORY WEB",
+          "color": "ae8f4f",
+          "description": ""
+        }
+      ],
+      "statuses": [
+        "ADOPT"
+      ],
+      "categories": [
+        "WEB"
+      ],
+      "pullRequests": [
+        {
+          "number": 7,
+          "title": "Add 'Happy' to README.md",
+          "url": "https://github.com/sixfeetup/GH-Tech-Sonar-Test/pull/7",
+          "state": "MERGED",
+          "merged": true
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "number": 9,
+      "title": "Do this instead",
+      "url": "https://github.com/sixfeetup/GH-Tech-Sonar-Test/issues/9",
+      "state": "OPEN",
+      "updatedAt": "2026-09-18T17:25:41Z",
+      "bodyHtml": "<h3 dir=\"auto\">\ud83d\udd2d Task Overview</h3>\n<p dir=\"auto\"><em>No response</em></p>\n<h3 dir=\"auto\">\ud83c\udfaf Objectives</h3>\n<p dir=\"auto\"><em>No response</em></p>\n<h3 dir=\"auto\">\ud83d\udd2c Steps or Implementation Details</h3>\n<p dir=\"auto\"><em>No response</em></p>\n<h3 dir=\"auto\">\ud83d\udcdd Additional context (Optional)</h3>\n<p dir=\"auto\">Add any relevant notes, links, or context (e.g., related issues, dependencies, or design documents).</p>\n<h3 dir=\"auto\">\ud83d\udd78\ufe0f Dependencies (Optional)</h3>\n<p dir=\"auto\"><em>No response</em></p>",
+      "labels": [
+        {
+          "name": "SONAR ADOPT",
+          "color": "0E8A16",
+          "description": "Approved for adoption; requires a merged supporting PR."
+        },
+        {
+          "name": "SONAR CATEGORY WEB",
+          "color": "ae8f4f",
+          "description": ""
+        }
+      ],
+      "statuses": [
+        "ADOPT"
+      ],
+      "categories": [
+        "WEB"
+      ],
+      "pullRequests": [],
+      "warnings": [
+        {
+          "code": "missing-adopt-evidence",
+          "message": "Issue 9 has ADOPT status but requires a merged pull request.",
+          "status": "ADOPT"
+        }
+      ]
+    },
+    {
+      "number": 10,
+      "title": "We should do this instead",
+      "url": "https://github.com/sixfeetup/GH-Tech-Sonar-Test/issues/10",
+      "state": "OPEN",
+      "updatedAt": "2026-09-18T13:50:44Z",
+      "bodyHtml": "<h3 dir=\"auto\">\ud83d\udd2d Task Overview</h3>\n<p dir=\"auto\"><em>No response</em></p>\n<h3 dir=\"auto\">\ud83c\udfaf Objectives</h3>\n<p dir=\"auto\"><em>No response</em></p>\n<h3 dir=\"auto\">\ud83d\udd2c Steps or Implementation Details</h3>\n<p dir=\"auto\"><em>No response</em></p>\n<h3 dir=\"auto\">\ud83d\udcdd Additional context (Optional)</h3>\n<p dir=\"auto\">Add any relevant notes, links, or context (e.g., related issues, dependencies, or design documents).</p>\n<h3 dir=\"auto\">\ud83d\udd78\ufe0f Dependencies (Optional)</h3>\n<p dir=\"auto\"><em>No response</em></p>",
+      "labels": [
+        {
+          "name": "SONAR PROPOSE",
+          "color": "FBCA04",
+          "description": "Proposed for adoption; requires an open supporting PR."
+        }
+      ],
+      "statuses": [
+        "PROPOSE"
+      ],
+      "categories": [
+        "Uncategorised"
+      ],
+      "pullRequests": [],
+      "warnings": [
+        {
+          "code": "missing-propose-evidence",
+          "message": "Issue 10 has PROPOSE status but requires an open pull request.",
+          "status": "PROPOSE"
+        }
+      ]
+    }
+  ]
+}

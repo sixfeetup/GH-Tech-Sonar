@@ -1,0 +1,19 @@
+:root {
+  color: #24292f;
+  background: #ffffff;
+  font-family: system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+button {
+  font: inherit;
+}
