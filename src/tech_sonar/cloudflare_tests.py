@@ -93,6 +93,35 @@ def test_run_command_translates_called_process_error(
     assert str(error.value) == "Wrangler failed: deployment rejected"
 
 
+def test_run_command_redacts_api_token_from_stderr(
+    tmp_path: pathlib.Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    arguments = ("npm", "exec", "wrangler")
+    secret = "token-456"
+
+    def fail(*args: object, **kwargs: object) -> None:
+        raise subprocess.CalledProcessError(
+            1,
+            arguments,
+            stderr=f"authentication failed for {secret}\n",
+        )
+
+    monkeypatch.setattr(subprocess, "run", fail)
+
+    with pytest.raises(cloudflare.CloudflarePublishingError) as error:
+        cloudflare.run_command(
+            arguments,
+            tmp_path,
+            {"CLOUDFLARE_API_TOKEN": secret},
+        )
+
+    assert str(error.value) == (
+        "Wrangler failed: authentication failed for [redacted]"
+    )
+    assert secret not in str(error.value)
+
+
 def test_publish_propagates_sanitized_publishing_error(
     tmp_path: pathlib.Path,
 ) -> None:

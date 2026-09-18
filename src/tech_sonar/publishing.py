@@ -82,7 +82,11 @@ def _publish(
         raise PublishingError(
             f"unsupported publisher: {publisher_args[0]}",
         )
-    if len(publisher_args) != 3:
+    if (
+        len(publisher_args) != 3
+        or not publisher_args[1]
+        or not publisher_args[2]
+    ):
         raise PublishingError(
             "cloudflare requires an account ID and project",
         )

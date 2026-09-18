@@ -33,8 +33,12 @@ def run_command(
             f"Wrangler failed: {error}",
         ) from error
     except subprocess.CalledProcessError as error:
+        stderr = error.stderr.strip()
+        secret = environ.get("CLOUDFLARE_API_TOKEN")
+        if secret:
+            stderr = stderr.replace(secret, "[redacted]")
         raise CloudflarePublishingError(
-            f"Wrangler failed: {error.stderr.strip()}",
+            f"Wrangler failed: {stderr}",
         ) from error
 
 

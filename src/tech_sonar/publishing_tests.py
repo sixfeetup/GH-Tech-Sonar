@@ -53,8 +53,17 @@ def test_publish_rejects_unsupported_publisher(
         publishing.publish(snapshot, output, ("unknown",), "secret")
 
 
-def test_publish_rejects_incorrect_cloudflare_arity(
+@pytest.mark.parametrize(
+    "value",
+    [
+        "cloudflare account",
+        'cloudflare "" project',
+        'cloudflare account ""',
+    ],
+)
+def test_publish_rejects_invalid_cloudflare_arguments(
     tmp_path: pathlib.Path,
+    value: str,
 ) -> None:
     snapshot = tmp_path / "sonar.json"
     output = tmp_path / "site"
@@ -63,7 +72,12 @@ def test_publish_rejects_incorrect_cloudflare_arity(
         publishing.PublishingError,
         match="cloudflare requires an account ID and project",
     ):
-        publishing.publish(snapshot, output, ("cloudflare", "account"), "secret")
+        publishing.publish(
+            snapshot,
+            output,
+            publishing.parse_publisher_args(value),
+            "secret",
+        )
 
 
 def test_publish_assembles_site_and_dispatches_cloudflare(
