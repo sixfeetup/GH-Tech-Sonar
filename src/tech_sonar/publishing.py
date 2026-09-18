@@ -1,5 +1,6 @@
 import collections.abc
 import importlib.resources
+import os
 import pathlib
 import shlex
 import shutil
@@ -34,10 +35,13 @@ def parse_publisher_args(value: str | None) -> tuple[str, ...]:
 
 
 def run_command(arguments: tuple[str, ...], cwd: pathlib.Path) -> None:
+    child_environment = dict(os.environ)
+    child_environment.pop("PUBLISH_SECRET", None)
     try:
         subprocess.run(
             arguments,
             cwd=cwd,
+            env=child_environment,
             check=True,
             capture_output=True,
             text=True,

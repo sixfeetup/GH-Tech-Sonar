@@ -230,12 +230,21 @@ def test_run_command_includes_stderr_without_a_secret(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     secret = "token-456"
+    child_environment: dict[str, str] = {}
+    monkeypatch.setenv("PUBLISH_SECRET", secret)
 
     def fail(*args: object, **kwargs: object) -> None:
+        environment = kwargs["env"]
+        assert isinstance(environment, dict)
+        child_environment.update(environment)
+        visible_secret = environment.get(
+            "PUBLISH_SECRET",
+            "publishing secret unavailable",
+        )
         raise subprocess.CalledProcessError(
             1,
             ("npm", "ci"),
-            stderr="dependency installation failed\n",
+            stderr=f"dependency installation failed: {visible_secret}\n",
         )
 
     monkeypatch.setattr(subprocess, "run", fail)
@@ -243,7 +252,11 @@ def test_run_command_includes_stderr_without_a_secret(
     with pytest.raises(publishing.PublishingError) as error:
         publishing.run_command(("npm", "ci"), tmp_path)
 
-    assert str(error.value) == "npm failed: dependency installation failed"
+    assert str(error.value) == (
+        "npm failed: dependency installation failed: "
+        "publishing secret unavailable"
+    )
+    assert "PUBLISH_SECRET" not in child_environment
     assert secret not in str(error.value)
 
 
