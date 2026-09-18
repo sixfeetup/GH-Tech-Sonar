@@ -86,20 +86,27 @@ def test_render_workflow_replaces_revision_marker() -> None:
     assert "__TECH_SONAR_REVISION__" not in workflow
     assert workflow.count("abc123") == 1
     assert workflow.endswith("\n")
+    assert "workflow_dispatch" in workflow
+    assert "issues" in workflow
+    assert "pull_request" in workflow
+    assert "concurrency" in workflow
+    assert "cancel-in-progress: false" in workflow
     for expected in (
-        "workflow_dispatch",
-        "issues",
-        "pull_request",
-        "concurrency",
-        "cancel-in-progress: false",
-        "permissions",
-        "astral-sh/setup-uv@v6",
-        'python-version: "3.14"',
-        "tech-sonar generate",
-        "actions/upload-artifact@v4",
+        "actions/setup-node@v4",
+        "node-version: 22",
+        "PUBLISH_ARGS: ${{ vars.PUBLISH_ARGS }}",
+        "PUBLISH_SECRET: ${{ secrets.PUBLISH_SECRET }}",
+        'tech-sonar publish "${{ steps.generate.outputs.artifact }}"',
+        '--output "$RUNNER_TEMP/tech-sonar-site"',
+        '--args "$PUBLISH_ARGS"',
+        "if: always()",
+        "name: tech-sonar-site",
+        "path: ${{ runner.temp }}/tech-sonar-site",
         "retention-days: 1",
     ):
         assert expected in workflow
+
+    assert "tech-sonar-json" not in workflow
 
 
 def test_workflow_is_current_uses_exact_file_comparison(
