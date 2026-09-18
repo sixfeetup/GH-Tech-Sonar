@@ -1,4 +1,5 @@
 import pathlib
+import subprocess
 
 import pytest
 
@@ -46,6 +47,50 @@ def test_publish_uses_locked_wrangler_and_translates_environment(
             },
         ),
     ]
+
+
+def test_run_command_translates_os_error(
+    tmp_path: pathlib.Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fail(*args: object, **kwargs: object) -> None:
+        raise OSError("wrangler missing")
+
+    monkeypatch.setattr(subprocess, "run", fail)
+
+    with pytest.raises(cloudflare.CloudflarePublishingError) as error:
+        cloudflare.run_command(
+            ("npm", "exec", "wrangler"),
+            tmp_path,
+            {},
+        )
+
+    assert str(error.value) == "Wrangler failed: wrangler missing"
+
+
+def test_run_command_translates_called_process_error(
+    tmp_path: pathlib.Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    arguments = ("npm", "exec", "wrangler")
+
+    def fail(*args: object, **kwargs: object) -> None:
+        raise subprocess.CalledProcessError(
+            1,
+            arguments,
+            stderr="deployment rejected\n",
+        )
+
+    monkeypatch.setattr(subprocess, "run", fail)
+
+    with pytest.raises(cloudflare.CloudflarePublishingError) as error:
+        cloudflare.run_command(
+            arguments,
+            tmp_path,
+            {},
+        )
+
+    assert str(error.value) == "Wrangler failed: deployment rejected"
 
 
 def test_publish_propagates_sanitized_publishing_error(
