@@ -3,8 +3,10 @@ import pathlib
 import pytest
 
 from tech_sonar import cli
+from tech_sonar import cloudflare
 from tech_sonar import installation
 from tech_sonar import model
+from tech_sonar import publishing
 
 
 def test_parser_accepts_install_repository() -> None:
@@ -26,6 +28,107 @@ def test_parser_rejects_invalid_install_repository(
 
     assert error.value.code == 2
     assert "repository must use OWNER/REPOSITORY form" in capsys.readouterr().err
+
+
+def test_parser_accepts_publish_arguments() -> None:
+    arguments = cli.parser().parse_args(
+        [
+            "publish",
+            "generated/sonar.json",
+            "--output",
+            "built-site",
+            "--args",
+            'cloudflare account "Sonar Project"',
+        ],
+    )
+
+    assert arguments.snapshot == pathlib.Path("generated/sonar.json")
+    assert arguments.output == pathlib.Path("built-site")
+    assert arguments.publisher_args == 'cloudflare account "Sonar Project"'
+
+
+def test_publish_passes_parsed_arguments_and_secret(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    parsed_arguments = ("cloudflare", "account", "Sonar Project")
+    parsed_values: list[str] = []
+    publications: list[
+        tuple[pathlib.Path, pathlib.Path, tuple[str, ...], str | None]
+    ] = []
+
+    def parse_publisher_args(value: str) -> tuple[str, ...]:
+        parsed_values.append(value)
+        return parsed_arguments
+
+    def publish(
+        snapshot: pathlib.Path,
+        output: pathlib.Path,
+        publisher_args: tuple[str, ...],
+        secret: str | None,
+    ) -> None:
+        publications.append((snapshot, output, publisher_args, secret))
+
+    monkeypatch.setenv("PUBLISH_SECRET", "token")
+    monkeypatch.setattr(publishing, "parse_publisher_args", parse_publisher_args)
+    monkeypatch.setattr(publishing, "publish", publish)
+
+    assert cli.main(
+        [
+            "publish",
+            "generated/sonar.json",
+            "--output",
+            "built-site",
+            "--args",
+            'cloudflare account "Sonar Project"',
+        ],
+    ) == 0
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err == ""
+    assert parsed_values == ['cloudflare account "Sonar Project"']
+    assert publications == [
+        (
+            pathlib.Path("generated/sonar.json"),
+            pathlib.Path("built-site"),
+            parsed_arguments,
+            "token",
+        ),
+    ]
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        publishing.PublishingError("site assembly failed"),
+        cloudflare.CloudflarePublishingError("deployment failed"),
+    ],
+)
+def test_publish_reports_errors(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    error: Exception,
+) -> None:
+    def fail(*args: object, **kwargs: object) -> None:
+        raise error
+
+    monkeypatch.setattr(publishing, "publish", fail)
+
+    result = cli.main(
+        [
+            "publish",
+            "generated/sonar.json",
+            "--output",
+            "built-site",
+            "--args",
+            "cloudflare account project",
+        ],
+    )
+
+    captured = capsys.readouterr()
+    assert result == 1
+    assert captured.out == ""
+    assert captured.err == f"error: {error}\n"
 
 
 def test_install_prints_pull_request_url(

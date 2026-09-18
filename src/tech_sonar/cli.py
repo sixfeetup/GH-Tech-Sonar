@@ -5,10 +5,12 @@ import pathlib
 import sys
 
 from tech_sonar import auth
+from tech_sonar import cloudflare
 from tech_sonar import generate
 from tech_sonar import github
 from tech_sonar import installation
 from tech_sonar import model
+from tech_sonar import publishing
 from tech_sonar import repository
 
 
@@ -32,6 +34,13 @@ def parser() -> argparse.ArgumentParser:
     install.add_argument("repository", type=repository_argument)
     commands.add_parser("update", help="update the Tech Sonar installation")
     commands.add_parser("generate", help="generate a static Sonar snapshot")
+    publish = commands.add_parser(
+        "publish",
+        help="build and publish a Tech Sonar site",
+    )
+    publish.add_argument("snapshot", type=pathlib.Path)
+    publish.add_argument("--output", type=pathlib.Path, required=True)
+    publish.add_argument("--args", dest="publisher_args", required=True)
     return result
 
 
@@ -78,12 +87,25 @@ def main(argv: collections.abc.Sequence[str] | None = None) -> int:
             return 0
         if arguments.command == "generate":
             return generate_command()
+        if arguments.command == "publish":
+            publisher_args = publishing.parse_publisher_args(
+                arguments.publisher_args,
+            )
+            publishing.publish(
+                arguments.snapshot,
+                arguments.output,
+                publisher_args,
+                os.environ.get("PUBLISH_SECRET"),
+            )
+            return 0
         raise AssertionError(f"unexpected command: {arguments.command}")
     except (
         installation.InstallationError,
         repository.RepositoryError,
         auth.AuthenticationError,
         github.GitHubError,
+        publishing.PublishingError,
+        cloudflare.CloudflarePublishingError,
         OSError,
     ) as error:
         print(f"error: {error}", file=sys.stderr)
