@@ -3,6 +3,11 @@
 Tech Sonar publishes an organization's technology decisions from GitHub issues
 as a static snapshot.
 
+## Web application
+
+See the [web application guide](web/README.md) for frontend development, test,
+and build commands.
+
 ## Prerequisites
 
 Install `git`, `gh`, and `uv`. Authenticate the GitHub CLI before running Tech
