@@ -112,29 +112,30 @@ select {
   height: auto;
 }
 
+.status-adopt {
+  --status-color: #174a2c;
+}
+
+.status-propose {
+  --status-color: #123d28;
+}
+
+.status-explore {
+  --status-color: #0e3323;
+}
+
+.status-hold {
+  --status-color: #0b291d;
+}
+
+.status-reject {
+  --status-color: #081f16;
+}
+
 .sonar-band {
+  fill: var(--status-color);
   stroke: #4b8964;
   stroke-width: 1;
-}
-
-.sonar-band[data-status-band="ADOPT"] {
-  fill: #174a2c;
-}
-
-.sonar-band[data-status-band="PROPOSE"] {
-  fill: #123d28;
-}
-
-.sonar-band[data-status-band="EXPLORE"] {
-  fill: #0e3323;
-}
-
-.sonar-band[data-status-band="HOLD"] {
-  fill: #0b291d;
-}
-
-.sonar-band[data-status-band="REJECT"] {
-  fill: #081f16;
 }
 
 .category-separator {
@@ -193,6 +194,7 @@ select {
   width: 1rem;
   height: 1rem;
   border-radius: 50%;
+  background: var(--status-color);
 }
 
 .sonar-empty,

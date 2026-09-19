@@ -83,6 +83,23 @@ test("places the desktop legend next to the radar", async (
   expect(gap).toBeLessThanOrEqual(24);
 });
 
+test("matches each legend color to its radar band", async ({ page }) => {
+  await loadSonar(page);
+
+  for (const status of ["ADOPT", "PROPOSE", "EXPLORE", "HOLD", "REJECT"]) {
+    const bandColor = await page
+      .locator(`[data-status-band="${status}"]`)
+      .evaluate((band) => getComputedStyle(band).fill);
+    const swatchColor = await page
+      .getByRole("listitem")
+      .filter({ hasText: status })
+      .locator(".sonar-key-swatch")
+      .evaluate((swatch) => getComputedStyle(swatch).backgroundColor);
+
+    expect(swatchColor).toBe(bandColor);
+  }
+});
+
 test("renders application surfaces with a dark theme", async ({ page }) => {
   await loadSonar(page);
 

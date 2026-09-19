@@ -9,13 +9,9 @@ import {
   type SonarPlacement,
 } from "./geometry";
 
-export const STATUS_COLORS: Record<Status, string> = {
-  REJECT: "#b60205",
-  HOLD: "#6a737d",
-  EXPLORE: "#1d76db",
-  PROPOSE: "#fbca04",
-  ADOPT: "#0e8a16",
-};
+function statusClass(status: Status): string {
+  return `status-${status.toLowerCase()}`;
+}
 
 interface SonarViewProps {
   items: SonarItem[];
@@ -96,7 +92,7 @@ export function SonarView({ items }: SonarViewProps) {
             {layout.bands.map((band) => (
               <path
                 aria-label={`${band.status} band`}
-                className="sonar-band"
+                className={`sonar-band ${statusClass(band.status)}`}
                 d={bandPath(band)}
                 data-status-band={band.status}
                 key={band.status}
@@ -197,8 +193,7 @@ export function SonarView({ items }: SonarViewProps) {
           <li key={status}>
             <span
               aria-hidden="true"
-              className="sonar-key-swatch"
-              style={{ backgroundColor: STATUS_COLORS[status] }}
+              className={`sonar-key-swatch ${statusClass(status)}`}
             />
             {status}
           </li>
