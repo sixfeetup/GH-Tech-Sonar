@@ -45,6 +45,72 @@ test("loads the fixture and toggles between Sonar and List", async ({
   ).toBeVisible();
 });
 
+test("positions the hovered title above its issue", async ({ page }) => {
+  await loadSonar(page);
+
+  const issue = page.getByRole("link", { name: /^#4 Meh tech/ });
+  await issue.hover();
+
+  const dotBox = await issue.locator("circle").boundingBox();
+  const tooltipBox = await page.getByRole("tooltip").boundingBox();
+  expect(dotBox).not.toBeNull();
+  expect(tooltipBox).not.toBeNull();
+  expect(tooltipBox!.y + tooltipBox!.height).toBeLessThan(dotBox!.y - 4);
+  expect(tooltipBox!.x + tooltipBox!.width / 2).toBeCloseTo(
+    dotBox!.x + dotBox!.width / 2,
+    0,
+  );
+});
+
+test("places the desktop legend next to the radar", async (
+  { page },
+  testInfo,
+) => {
+  test.skip(testInfo.project.name !== "desktop");
+  await loadSonar(page);
+
+  const radarBox = await page
+    .locator('[data-status-band="REJECT"]')
+    .boundingBox();
+  const legendBox = await page
+    .getByRole("list", { name: "Status bands" })
+    .boundingBox();
+  expect(radarBox).not.toBeNull();
+  expect(legendBox).not.toBeNull();
+
+  const gap = legendBox!.x - (radarBox!.x + radarBox!.width);
+  expect(gap).toBeGreaterThanOrEqual(0);
+  expect(gap).toBeLessThanOrEqual(24);
+});
+
+test("renders application surfaces with a dark theme", async ({ page }) => {
+  await loadSonar(page);
+
+  const colors = await page.evaluate(() => ({
+    background: getComputedStyle(document.body).backgroundColor,
+    text: getComputedStyle(document.body).color,
+    control: getComputedStyle(document.querySelector("select")!).backgroundColor,
+    legend: getComputedStyle(
+      document.querySelector<HTMLElement>(".sonar-key")!,
+    ).backgroundColor,
+    radar: getComputedStyle(
+      document.querySelector<SVGPathElement>(".sonar-band")!,
+    ).fill,
+  }));
+  const channels = (color: string) =>
+    color.match(/[\d.]+/g)!.slice(0, 3).map(Number);
+
+  for (const surface of [
+    colors.background,
+    colors.control,
+    colors.legend,
+    colors.radar,
+  ]) {
+    expect(Math.max(...channels(surface))).toBeLessThan(96);
+  }
+  expect(Math.min(...channels(colors.text))).toBeGreaterThan(160);
+});
+
 test("filters both views by category and status", async ({ page }) => {
   await loadSonar(page);
   await page

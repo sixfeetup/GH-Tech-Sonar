@@ -175,7 +175,18 @@ export function SonarView({ items }: SonarViewProps) {
           </p>
         )}
         {tooltipPlacement !== null && (
-          <div className="sonar-tooltip" role="tooltip">
+          <div
+            className="sonar-tooltip"
+            role="tooltip"
+            style={{
+              left: center + tooltipPlacement.x,
+              top:
+                center +
+                tooltipPlacement.y -
+                tooltipPlacement.radius -
+                8,
+            }}
+          >
             {tooltipPlacement.item.title}
           </div>
         )}

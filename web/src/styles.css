@@ -1,12 +1,19 @@
 :root {
-  color: #24292f;
-  background: #ffffff;
+  color: #c9f7d5;
+  background: #06170f;
+  color-scheme: dark;
   font-family: system-ui, sans-serif;
 }
 
 body {
+  min-height: 100vh;
   margin: 0;
+  background: #06170f;
   overflow-wrap: anywhere;
+}
+
+a {
+  color: #7ce9a2;
 }
 
 main {
@@ -42,8 +49,8 @@ select {
 .view-toggle button {
   box-sizing: border-box;
   min-height: 2.5rem;
-  border: 1px solid #8c959f;
-  background: #ffffff;
+  border: 1px solid #397654;
+  background: #0b291c;
   color: inherit;
 }
 
@@ -66,8 +73,8 @@ select {
 }
 
 .view-toggle button[aria-pressed="true"] {
-  background: #24292f;
-  color: #ffffff;
+  background: #85e89d;
+  color: #06170f;
 }
 
 .sonar-list {
@@ -79,15 +86,16 @@ select {
 }
 
 .sonar-list article {
-  border: 1px solid #d0d7de;
+  border: 1px solid #2e6648;
   border-radius: 0.4rem;
+  background: #0a2117;
   padding: 1rem;
 }
 
 .sonar-view {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 1rem;
+  gap: 0;
   align-items: start;
   margin-top: 1rem;
 }
@@ -105,49 +113,49 @@ select {
 }
 
 .sonar-band {
-  stroke: #ffffff;
+  stroke: #4b8964;
   stroke-width: 1;
 }
 
 .sonar-band[data-status-band="ADOPT"] {
-  fill: #d8f3dc;
+  fill: #174a2c;
 }
 
 .sonar-band[data-status-band="PROPOSE"] {
-  fill: #fff3bf;
+  fill: #123d28;
 }
 
 .sonar-band[data-status-band="EXPLORE"] {
-  fill: #dbeafe;
+  fill: #0e3323;
 }
 
 .sonar-band[data-status-band="HOLD"] {
-  fill: #eaeef2;
+  fill: #0b291d;
 }
 
 .sonar-band[data-status-band="REJECT"] {
-  fill: #ffe3e3;
+  fill: #081f16;
 }
 
 .category-separator {
-  stroke: #57606a;
+  stroke: #69af82;
   stroke-width: 1;
 }
 
 .category-label {
-  fill: #24292f;
+  fill: #c9f7d5;
   font-size: 0.9rem;
   font-weight: 600;
 }
 
 .sonar-dot circle {
-  fill: #24292f;
-  stroke: #ffffff;
+  fill: #a5edb7;
+  stroke: #06170f;
   stroke-width: 2;
 }
 
 .sonar-dot text {
-  fill: #ffffff;
+  fill: #06170f;
   font-size: 0.75rem;
   font-weight: 700;
   pointer-events: none;
@@ -159,18 +167,18 @@ select {
 
 .sonar-dot:focus circle,
 .sonar-dot:hover circle {
-  stroke: #0969da;
+  stroke: #efff8a;
   stroke-width: 4;
 }
 
 .sonar-key {
   display: grid;
   gap: 0.5rem;
-  margin: 0;
+  margin: 0 0 0 -1rem;
   padding: 0.75rem;
-  border: 1px solid #d0d7de;
+  border: 1px solid #2e6648;
   border-radius: 0.4rem;
-  background: #ffffff;
+  background: #0a2117;
   list-style: none;
   font-weight: 600;
 }
@@ -193,9 +201,10 @@ select {
   left: 50%;
   margin: 0;
   padding: 0.5rem 0.75rem;
-  border: 1px solid #d0d7de;
+  border: 1px solid #397654;
   border-radius: 0.3rem;
-  background: #ffffff;
+  background: #0b291c;
+  color: #c9f7d5;
   transform: translateX(-50%);
 }
 
@@ -205,8 +214,10 @@ select {
 }
 
 .sonar-tooltip {
-  bottom: 0.5rem;
+  max-width: min(24rem, 80%);
   box-shadow: 0 0.25rem 0.75rem rgb(31 35 40 / 15%);
+  pointer-events: none;
+  transform: translate(-50%, -100%);
 }
 
 @media (max-width: 47.99rem) {
@@ -220,11 +231,13 @@ select {
 
   .sonar-view {
     grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
   }
 
   .sonar-key {
     grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
     grid-row: 1;
+    margin-left: 0;
   }
 }
 
