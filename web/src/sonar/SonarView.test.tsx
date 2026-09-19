@@ -35,6 +35,28 @@ describe("SonarView", () => {
     expect(screen.getByText("WEB", { selector: "text" })).toBeInTheDocument();
   });
 
+  it("orients category labels tangentially and keeps them upright", () => {
+    const item = {
+      ...snapshotFixture.items[0],
+      statuses: ["ADOPT" as const],
+      categories: ["AI", "CLOUD", "WEB"],
+    };
+    renderSonarView([item]);
+
+    expect(screen.getByText("AI", { selector: "text" })).toHaveAttribute(
+      "transform",
+      expect.stringMatching(/^rotate\(-30 /),
+    );
+    expect(screen.getByText("CLOUD", { selector: "text" })).toHaveAttribute(
+      "transform",
+      expect.stringMatching(/^rotate\(-90 /),
+    );
+    expect(screen.getByText("WEB", { selector: "text" })).toHaveAttribute(
+      "transform",
+      expect.stringMatching(/^rotate\(30 /),
+    );
+  });
+
   it("renders every visual placement as an accessible numbered link", () => {
     renderSonarView();
 

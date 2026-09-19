@@ -33,6 +33,16 @@ function pointAt(radius: number, angle: number): Point {
   };
 }
 
+function tangentRotation(angle: number): number {
+  let rotation = ((angle + 270) % 360) - 180;
+  if (rotation > 90) {
+    rotation -= 180;
+  } else if (rotation < -90) {
+    rotation += 180;
+  }
+  return rotation;
+}
+
 function bandPath({ innerRadius, outerRadius }: SonarBand): string {
   const outer = [
     `M ${outerRadius} 0`,
@@ -102,10 +112,10 @@ export function SonarView({ items }: SonarViewProps) {
 
             {layout.categories.map((category) => {
               const end = pointAt(layout.radius, category.startAngle);
-              const label = pointAt(
-                layout.radius + 24,
-                (category.startAngle + category.endAngle) / 2,
-              );
+              const labelAngle =
+                (category.startAngle + category.endAngle) / 2;
+              const label = pointAt(layout.radius + 24, labelAngle);
+              const labelRotation = tangentRotation(labelAngle);
               return (
                 <g key={category.category}>
                   <line
@@ -119,6 +129,7 @@ export function SonarView({ items }: SonarViewProps) {
                   <text
                     className="category-label"
                     textAnchor="middle"
+                    transform={`rotate(${labelRotation} ${label.x} ${label.y})`}
                     x={label.x}
                     y={label.y}
                   >
