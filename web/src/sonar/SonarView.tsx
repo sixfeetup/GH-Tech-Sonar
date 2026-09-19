@@ -9,13 +9,9 @@ import {
   type SonarPlacement,
 } from "./geometry";
 
-export const STATUS_COLORS: Record<Status, string> = {
-  REJECT: "#b60205",
-  HOLD: "#6a737d",
-  EXPLORE: "#1d76db",
-  PROPOSE: "#fbca04",
-  ADOPT: "#0e8a16",
-};
+function statusClass(status: Status): string {
+  return `status-${status.toLowerCase()}`;
+}
 
 interface SonarViewProps {
   items: SonarItem[];
@@ -35,6 +31,16 @@ function pointAt(radius: number, angle: number): Point {
     x: radius * Math.cos(radians),
     y: radius * Math.sin(radians),
   };
+}
+
+function tangentRotation(angle: number): number {
+  let rotation = ((angle + 270) % 360) - 180;
+  if (rotation > 90) {
+    rotation -= 180;
+  } else if (rotation < -90) {
+    rotation += 180;
+  }
+  return rotation;
 }
 
 function bandPath({ innerRadius, outerRadius }: SonarBand): string {
@@ -96,7 +102,7 @@ export function SonarView({ items }: SonarViewProps) {
             {layout.bands.map((band) => (
               <path
                 aria-label={`${band.status} band`}
-                className="sonar-band"
+                className={`sonar-band ${statusClass(band.status)}`}
                 d={bandPath(band)}
                 data-status-band={band.status}
                 key={band.status}
@@ -106,10 +112,10 @@ export function SonarView({ items }: SonarViewProps) {
 
             {layout.categories.map((category) => {
               const end = pointAt(layout.radius, category.startAngle);
-              const label = pointAt(
-                layout.radius + 24,
-                (category.startAngle + category.endAngle) / 2,
-              );
+              const labelAngle =
+                (category.startAngle + category.endAngle) / 2;
+              const label = pointAt(layout.radius + 24, labelAngle);
+              const labelRotation = tangentRotation(labelAngle);
               return (
                 <g key={category.category}>
                   <line
@@ -123,6 +129,7 @@ export function SonarView({ items }: SonarViewProps) {
                   <text
                     className="category-label"
                     textAnchor="middle"
+                    transform={`rotate(${labelRotation} ${label.x} ${label.y})`}
                     x={label.x}
                     y={label.y}
                   >
@@ -175,7 +182,18 @@ export function SonarView({ items }: SonarViewProps) {
           </p>
         )}
         {tooltipPlacement !== null && (
-          <div className="sonar-tooltip" role="tooltip">
+          <div
+            className="sonar-tooltip"
+            role="tooltip"
+            style={{
+              left: center + tooltipPlacement.x,
+              top:
+                center +
+                tooltipPlacement.y -
+                tooltipPlacement.radius -
+                8,
+            }}
+          >
             {tooltipPlacement.item.title}
           </div>
         )}
@@ -186,8 +204,7 @@ export function SonarView({ items }: SonarViewProps) {
           <li key={status}>
             <span
               aria-hidden="true"
-              className="sonar-key-swatch"
-              style={{ backgroundColor: STATUS_COLORS[status] }}
+              className={`sonar-key-swatch ${statusClass(status)}`}
             />
             {status}
           </li>
