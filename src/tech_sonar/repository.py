@@ -18,6 +18,23 @@ class RepositoryError(RuntimeError):
     pass
 
 
+_INHERITED_TEMPLATES_QUERY = """
+query($owner: String!) {
+  repository(owner: $owner, name: ".github") {
+    object(expression: "HEAD:.github/ISSUE_TEMPLATE") {
+      ... on Tree {
+        entries {
+          name
+          type
+          object { ... on Blob { text } }
+        }
+      }
+    }
+  }
+}
+""".strip()
+
+
 @dataclasses.dataclass(frozen=True, slots=True)
 class State:
     root: pathlib.Path
@@ -142,6 +159,42 @@ def clone(
         None,
     )
     return destination
+
+
+def inherited_issue_templates(
+    owner: str,
+    run: CommandRunner = run_command,
+) -> dict[pathlib.Path, str] | None:
+    response = run(
+        (
+            "gh",
+            "api",
+            "graphql",
+            "-f",
+            f"query={_INHERITED_TEMPLATES_QUERY}",
+            "-F",
+            f"owner={owner}",
+        ),
+        None,
+    )
+    try:
+        data: dict[str, Any] = json.loads(response)
+        source = data["data"]["repository"]
+        if source is None:
+            return None
+        tree = source["object"]
+        if tree is None:
+            return {}
+        return {
+            pathlib.Path(".github/ISSUE_TEMPLATE") / entry["name"]:
+            entry["object"]["text"]
+            for entry in tree["entries"]
+            if entry["type"] == "blob"
+        }
+    except (json.JSONDecodeError, KeyError, TypeError) as error:
+        raise RepositoryError(
+            "GitHub returned malformed inherited issue-template data",
+        ) from error
 
 
 def label_names(

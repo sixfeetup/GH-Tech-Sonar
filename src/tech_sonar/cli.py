@@ -70,12 +70,14 @@ def main(argv: collections.abc.Sequence[str] | None = None) -> int:
     arguments = parser().parse_args(argv)
     try:
         if arguments.command == "install":
-            pull_request = installation.install(
+            result = installation.install(
                 arguments.repository,
                 pathlib.Path.cwd(),
                 SOURCE_ROOT,
             )
-            print(pull_request)
+            for warning in result.warnings:
+                print(f"warning: {warning}", file=sys.stderr)
+            print(result.pull_request)
             return 0
         if arguments.command == "update":
             pull_request = installation.update(

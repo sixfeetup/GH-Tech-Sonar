@@ -265,6 +265,102 @@ def test_label_names_returns_raw_names(tmp_path: pathlib.Path) -> None:
     assert runner.calls == [(command, tmp_path)]
 
 
+def test_inherited_issue_templates_returns_template_files() -> None:
+    response = json.dumps(
+        {
+            "data": {
+                "repository": {
+                    "object": {
+                        "entries": [
+                            {
+                                "name": "bug.yml",
+                                "type": "blob",
+                                "object": {"text": "name: Bug\n"},
+                            },
+                            {
+                                "name": "notes",
+                                "type": "tree",
+                                "object": {},
+                            },
+                        ],
+                    },
+                },
+            },
+        },
+    )
+    command = (
+        "gh",
+        "api",
+        "graphql",
+        "-f",
+        f"query={repository._INHERITED_TEMPLATES_QUERY}",
+        "-F",
+        "owner=sixfeetup",
+    )
+    runner = FakeRunner({command: response})
+
+    assert repository.inherited_issue_templates("sixfeetup", runner) == {
+        pathlib.Path(".github/ISSUE_TEMPLATE/bug.yml"): "name: Bug\n",
+    }
+    assert runner.calls == [(command, None)]
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        (None, None),
+        ({"object": None}, {}),
+    ],
+)
+def test_inherited_issue_templates_handles_unavailable_sources(
+    source: object,
+    expected: dict[pathlib.Path, str] | None,
+) -> None:
+    command = (
+        "gh",
+        "api",
+        "graphql",
+        "-f",
+        f"query={repository._INHERITED_TEMPLATES_QUERY}",
+        "-F",
+        "owner=sixfeetup",
+    )
+    runner = FakeRunner(
+        {
+            command: json.dumps(
+                {"data": {"repository": source}},
+            ),
+        },
+    )
+
+    assert repository.inherited_issue_templates("sixfeetup", runner) == expected
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        "not JSON",
+        json.dumps({"data": {}}),
+    ],
+)
+def test_inherited_issue_templates_reports_malformed_github_json(
+    response: str,
+) -> None:
+    command = (
+        "gh",
+        "api",
+        "graphql",
+        "-f",
+        f"query={repository._INHERITED_TEMPLATES_QUERY}",
+        "-F",
+        "owner=sixfeetup",
+    )
+    runner = FakeRunner({command: response})
+
+    with pytest.raises(repository.RepositoryError, match="malformed"):
+        repository.inherited_issue_templates("sixfeetup", runner)
+
+
 def test_create_label_uses_all_label_fields(tmp_path: pathlib.Path) -> None:
     command = (
         "gh",
