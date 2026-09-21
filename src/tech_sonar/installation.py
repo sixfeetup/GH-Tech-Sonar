@@ -10,6 +10,9 @@ from tech_sonar import repository
 
 
 MANAGED_WORKFLOW = pathlib.Path(".github/workflows/tech-sonar.yml")
+MANAGED_ISSUE_TEMPLATE = pathlib.Path(
+    ".github/ISSUE_TEMPLATE/technology.yml",
+)
 _REVISION_MARKER = "__TECH_SONAR_REVISION__"
 
 
@@ -63,17 +66,35 @@ def render_workflow(revision: str) -> str:
     return content.replace(_REVISION_MARKER, revision)
 
 
-def workflow_is_current(root: pathlib.Path, content: str) -> bool:
-    workflow = root / MANAGED_WORKFLOW
-    if not workflow.exists():
-        return False
-    return workflow.read_text(encoding="utf-8") == content
+def render_managed_files(revision: str) -> dict[pathlib.Path, str]:
+    template = importlib.resources.files("tech_sonar").joinpath(
+        "issue_templates/technology.yml",
+    )
+    return {
+        MANAGED_WORKFLOW: render_workflow(revision),
+        MANAGED_ISSUE_TEMPLATE: template.read_text(encoding="utf-8"),
+    }
 
 
-def write_workflow(root: pathlib.Path, content: str) -> None:
-    workflow = root / MANAGED_WORKFLOW
-    workflow.parent.mkdir(parents=True, exist_ok=True)
-    workflow.write_text(content, encoding="utf-8")
+def managed_files_are_current(
+    root: pathlib.Path,
+    contents: collections.abc.Mapping[pathlib.Path, str],
+) -> bool:
+    return all(
+        (path := root / relative_path).exists()
+        and path.read_text(encoding="utf-8") == content
+        for relative_path, content in contents.items()
+    )
+
+
+def write_managed_files(
+    root: pathlib.Path,
+    contents: collections.abc.Mapping[pathlib.Path, str],
+) -> None:
+    for relative_path, content in contents.items():
+        path = root / relative_path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
 
 
 def reconcile_labels(
@@ -130,10 +151,12 @@ def install(
         run,
     )
     repository.create_branch(state.root, branch, run)
-    write_workflow(state.root, render_workflow(revision))
+    managed_files = render_managed_files(revision)
+    write_managed_files(state.root, managed_files)
     repository.commit_and_push(
         state.root,
-        "chore: install Tech Sonar workflow",
+        "chore: install Tech Sonar",
+        managed_files,
         run,
     )
     return repository.open_pull_request(
@@ -141,7 +164,7 @@ def install(
         branch=branch,
         base=state.default_branch,
         title="Install Tech Sonar",
-        body="Installs the workflow managed by Tech Sonar.",
+        body="Installs files managed by Tech Sonar.",
         run=run,
     )
 
@@ -153,10 +176,10 @@ def update(
 ) -> str | None:
     revision = repository.source_revision(source_root, run)
     state = repository.inspect(target_root, run)
-    content = render_workflow(revision)
+    managed_files = render_managed_files(revision)
 
     reconcile_labels(state.root, run)
-    if workflow_is_current(state.root, content):
+    if managed_files_are_current(state.root, managed_files):
         return None
 
     branch = state.current_branch
@@ -169,10 +192,11 @@ def update(
         )
         repository.create_branch(state.root, branch, run)
 
-    write_workflow(state.root, content)
+    write_managed_files(state.root, managed_files)
     repository.commit_and_push(
         state.root,
-        "chore: update Tech Sonar workflow",
+        "chore: update Tech Sonar",
+        managed_files,
         run,
     )
     return repository.open_pull_request(
@@ -180,6 +204,6 @@ def update(
         branch=branch,
         base=state.default_branch,
         title="Update Tech Sonar",
-        body="Updates the workflow managed by Tech Sonar.",
+        body="Updates files managed by Tech Sonar.",
         run=run,
     )

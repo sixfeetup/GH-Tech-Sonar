@@ -220,10 +220,11 @@ def create_branch(
 def commit_and_push(
     path: pathlib.Path,
     message: str,
+    managed_paths: collections.abc.Iterable[pathlib.Path],
     run: CommandRunner = run_command,
 ) -> None:
     run(
-        ("git", "add", "--", ".github/workflows/tech-sonar.yml"),
+        ("git", "add", "--", *(str(item) for item in managed_paths)),
         path,
     )
     run(("git", "commit", "-m", message), path)

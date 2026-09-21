@@ -80,6 +80,20 @@ def test_reconcile_labels_creates_only_missing_names(
     ]
 
 
+def test_render_managed_files_includes_technology_issue_form() -> None:
+    files = installation.render_managed_files("abc123")
+
+    template = files[installation.MANAGED_ISSUE_TEMPLATE]
+    assert "name: 🔭 Technology" in template
+    assert "  - SONAR EXPLORE" in template
+    assert "SONAR CATEGORY …" in template
+    assert "replace" in template
+    assert "`SONAR EXPLORE` with another Sonar status" in template
+    assert "label: Description" in template
+    assert "label: Suitable projects" in template
+    assert "label: Required skills" in template
+
+
 def test_render_workflow_replaces_revision_marker() -> None:
     workflow = installation.render_workflow("abc123")
 
@@ -109,31 +123,35 @@ def test_render_workflow_replaces_revision_marker() -> None:
     assert "tech-sonar-json" not in workflow
 
 
-def test_workflow_is_current_uses_exact_file_comparison(
+def test_managed_files_are_current_uses_exact_file_comparison(
     tmp_path: pathlib.Path,
 ) -> None:
-    content = "workflow\n"
+    contents = {
+        installation.MANAGED_WORKFLOW: "workflow\n",
+        installation.MANAGED_ISSUE_TEMPLATE: "template\n",
+    }
 
-    assert not installation.workflow_is_current(tmp_path, content)
+    assert not installation.managed_files_are_current(tmp_path, contents)
 
-    managed_workflow = tmp_path / installation.MANAGED_WORKFLOW
-    managed_workflow.parent.mkdir(parents=True)
-    managed_workflow.write_text(content, encoding="utf-8")
+    installation.write_managed_files(tmp_path, contents)
 
-    assert installation.workflow_is_current(tmp_path, content)
-    assert not installation.workflow_is_current(tmp_path, "workflow")
+    assert installation.managed_files_are_current(tmp_path, contents)
+    contents[installation.MANAGED_ISSUE_TEMPLATE] = "changed\n"
+    assert not installation.managed_files_are_current(tmp_path, contents)
 
 
-def test_write_workflow_creates_parents_and_writes_exact_text(
+def test_write_managed_files_creates_parents_and_writes_exact_text(
     tmp_path: pathlib.Path,
 ) -> None:
-    content = "workflow\n"
+    contents = {
+        installation.MANAGED_WORKFLOW: "workflow\n",
+        installation.MANAGED_ISSUE_TEMPLATE: "template\n",
+    }
 
-    installation.write_workflow(tmp_path, content)
+    installation.write_managed_files(tmp_path, contents)
 
-    assert (tmp_path / installation.MANAGED_WORKFLOW).read_text(
-        encoding="utf-8",
-    ) == content
+    for path, content in contents.items():
+        assert (tmp_path / path).read_text(encoding="utf-8") == content
 
 
 def test_install_orchestrates_repository_changes_in_order(
@@ -208,18 +226,30 @@ def test_install_orchestrates_repository_changes_in_order(
         )
         calls.append("create_branch")
 
-    def write_workflow(root: pathlib.Path, content: str) -> None:
+    def write_managed_files(
+        root: pathlib.Path,
+        contents: dict[pathlib.Path, str],
+    ) -> None:
         assert root == clone_root
-        assert "abc123" in content
-        calls.append("write_workflow")
+        assert tuple(contents) == (
+            installation.MANAGED_WORKFLOW,
+            installation.MANAGED_ISSUE_TEMPLATE,
+        )
+        assert "abc123" in contents[installation.MANAGED_WORKFLOW]
+        calls.append("write_managed_files")
 
     def commit_and_push(
         root: pathlib.Path,
         message: str,
+        managed_paths: object,
         run: repository.CommandRunner,
     ) -> None:
         assert root == clone_root
-        assert message == "chore: install Tech Sonar workflow"
+        assert message == "chore: install Tech Sonar"
+        assert tuple(managed_paths) == (
+            installation.MANAGED_WORKFLOW,
+            installation.MANAGED_ISSUE_TEMPLATE,
+        )
         calls.append("commit_and_push")
 
     def open_pull_request(
@@ -235,7 +265,7 @@ def test_install_orchestrates_repository_changes_in_order(
         assert branch == "tech-sonar/install-20260102-030405"
         assert base == "main"
         assert title == "Install Tech Sonar"
-        assert body == "Installs the workflow managed by Tech Sonar."
+        assert body == "Installs files managed by Tech Sonar."
         calls.append("open_pull_request")
         return "https://github.com/sixfeetup/example/pull/1"
 
@@ -245,7 +275,11 @@ def test_install_orchestrates_repository_changes_in_order(
     monkeypatch.setattr(installation, "reconcile_labels", reconcile_labels)
     monkeypatch.setattr(installation, "unique_branch", unique_branch)
     monkeypatch.setattr(installation.repository, "create_branch", create_branch)
-    monkeypatch.setattr(installation, "write_workflow", write_workflow)
+    monkeypatch.setattr(
+        installation,
+        "write_managed_files",
+        write_managed_files,
+    )
     monkeypatch.setattr(
         installation.repository,
         "commit_and_push",
@@ -272,7 +306,7 @@ def test_install_orchestrates_repository_changes_in_order(
         "reconcile_labels",
         "unique_branch",
         "create_branch",
-        "write_workflow",
+        "write_managed_files",
         "commit_and_push",
         "open_pull_request",
     ]
@@ -416,8 +450,11 @@ def test_update_reconciles_labels_before_canonical_no_op(
     source_root = tmp_path / "source"
     target_root = tmp_path / "target"
     target_root.mkdir()
-    canonical = "canonical abc123\n"
-    installation.write_workflow(target_root, canonical)
+    canonical = {
+        installation.MANAGED_WORKFLOW: "canonical abc123\n",
+        installation.MANAGED_ISSUE_TEMPLATE: "template\n",
+    }
+    installation.write_managed_files(target_root, canonical)
     calls: list[str] = []
 
     def source_revision(root: pathlib.Path, run: repository.CommandRunner) -> str:
@@ -442,7 +479,7 @@ def test_update_reconciles_labels_before_canonical_no_op(
     monkeypatch.setattr(installation.repository, "inspect", inspect)
     monkeypatch.setattr(
         installation,
-        "render_workflow",
+        "render_managed_files",
         lambda revision: canonical,
     )
     monkeypatch.setattr(
@@ -468,9 +505,8 @@ def test_update_reconciles_labels_before_canonical_no_op(
     )
 
     assert result is None
-    assert (target_root / installation.MANAGED_WORKFLOW).read_text(
-        encoding="utf-8",
-    ) == canonical
+    for path, content in canonical.items():
+        assert (target_root / path).read_text(encoding="utf-8") == content
     assert calls == [
         "source_revision",
         "inspect",
@@ -485,10 +521,13 @@ def test_update_default_branch_creates_branch_before_writing(
     source_root = tmp_path / "source"
     target_root = tmp_path / "target"
     target_root.mkdir()
-    canonical = "canonical abc123\n"
+    canonical = {
+        installation.MANAGED_WORKFLOW: "canonical abc123\n",
+        installation.MANAGED_ISSUE_TEMPLATE: "template\n",
+    }
     branch = "tech-sonar/install-20260102-030405"
     calls: list[str] = []
-    original_write_workflow = installation.write_workflow
+    original_write_managed_files = installation.write_managed_files
 
     monkeypatch.setattr(
         installation.repository,
@@ -506,7 +545,11 @@ def test_update_default_branch_creates_branch_before_writing(
             current_branch="main",
         ),
     )
-    monkeypatch.setattr(installation, "render_workflow", lambda revision: canonical)
+    monkeypatch.setattr(
+        installation,
+        "render_managed_files",
+        lambda revision: canonical,
+    )
     monkeypatch.setattr(
         installation,
         "reconcile_labels",
@@ -523,18 +566,27 @@ def test_update_default_branch_creates_branch_before_writing(
         lambda root, name, run: calls.append("create_branch"),
     )
 
-    def write_workflow(root: pathlib.Path, content: str) -> None:
-        calls.append("write_workflow")
-        original_write_workflow(root, content)
+    def write_managed_files(
+        root: pathlib.Path,
+        contents: dict[pathlib.Path, str],
+    ) -> None:
+        calls.append("write_managed_files")
+        original_write_managed_files(root, contents)
 
-    monkeypatch.setattr(installation, "write_workflow", write_workflow)
+    monkeypatch.setattr(
+        installation,
+        "write_managed_files",
+        write_managed_files,
+    )
 
     def commit_and_push(
         root: pathlib.Path,
         message: str,
+        managed_paths: object,
         run: repository.CommandRunner,
     ) -> None:
-        assert message == "chore: update Tech Sonar workflow"
+        assert message == "chore: update Tech Sonar"
+        assert tuple(managed_paths) == tuple(canonical)
         calls.append("commit_and_push")
 
     monkeypatch.setattr(
@@ -555,7 +607,7 @@ def test_update_default_branch_creates_branch_before_writing(
         assert branch == "tech-sonar/install-20260102-030405"
         assert base == "main"
         assert title == "Update Tech Sonar"
-        assert body == "Updates the workflow managed by Tech Sonar."
+        assert body == "Updates files managed by Tech Sonar."
         calls.append("open_pull_request")
         return "https://github.com/sixfeetup/example/pull/2"
 
@@ -572,16 +624,15 @@ def test_update_default_branch_creates_branch_before_writing(
     )
 
     assert result == "https://github.com/sixfeetup/example/pull/2"
-    assert (target_root / installation.MANAGED_WORKFLOW).read_text(
-        encoding="utf-8",
-    ) == canonical
+    for path, content in canonical.items():
+        assert (target_root / path).read_text(encoding="utf-8") == content
     assert calls == [
         "source_revision",
         "inspect",
         "reconcile_labels",
         "unique_branch",
         "create_branch",
-        "write_workflow",
+        "write_managed_files",
         "commit_and_push",
         "open_pull_request",
     ]
@@ -593,8 +644,12 @@ def test_update_non_default_branch_writes_without_creating_branch(
 ) -> None:
     target_root = tmp_path / "target"
     target_root.mkdir()
+    canonical = {
+        installation.MANAGED_WORKFLOW: "canonical abc123\n",
+        installation.MANAGED_ISSUE_TEMPLATE: "template\n",
+    }
     calls: list[str] = []
-    original_write_workflow = installation.write_workflow
+    original_write_managed_files = installation.write_managed_files
 
     monkeypatch.setattr(
         installation.repository,
@@ -614,8 +669,8 @@ def test_update_non_default_branch_writes_without_creating_branch(
     )
     monkeypatch.setattr(
         installation,
-        "render_workflow",
-        lambda revision: "canonical abc123\n",
+        "render_managed_files",
+        lambda revision: canonical,
     )
     monkeypatch.setattr(
         installation,
@@ -628,15 +683,24 @@ def test_update_non_default_branch_writes_without_creating_branch(
         lambda *args: pytest.fail("non-default update created a branch"),
     )
 
-    def write_workflow(root: pathlib.Path, content: str) -> None:
-        calls.append("write_workflow")
-        original_write_workflow(root, content)
+    def write_managed_files(
+        root: pathlib.Path,
+        contents: dict[pathlib.Path, str],
+    ) -> None:
+        calls.append("write_managed_files")
+        original_write_managed_files(root, contents)
 
-    monkeypatch.setattr(installation, "write_workflow", write_workflow)
+    monkeypatch.setattr(
+        installation,
+        "write_managed_files",
+        write_managed_files,
+    )
     monkeypatch.setattr(
         installation.repository,
         "commit_and_push",
-        lambda root, message, run: calls.append("commit_and_push"),
+        lambda root, message, managed_paths, run: calls.append(
+            "commit_and_push",
+        ),
     )
 
     def open_pull_request(
@@ -667,7 +731,7 @@ def test_update_non_default_branch_writes_without_creating_branch(
         "source_revision",
         "inspect",
         "reconcile_labels",
-        "write_workflow",
+        "write_managed_files",
         "commit_and_push",
         "open_pull_request",
     ]
@@ -699,14 +763,17 @@ def test_update_returns_existing_open_pull_request(
     )
     monkeypatch.setattr(
         installation,
-        "render_workflow",
-        lambda revision: "canonical abc123\n",
+        "render_managed_files",
+        lambda revision: {
+            installation.MANAGED_WORKFLOW: "canonical abc123\n",
+            installation.MANAGED_ISSUE_TEMPLATE: "template\n",
+        },
     )
     monkeypatch.setattr(installation, "reconcile_labels", lambda root, run: None)
     monkeypatch.setattr(
         installation.repository,
         "commit_and_push",
-        lambda root, message, run: None,
+        lambda root, message, managed_paths, run: None,
     )
 
     def run(arguments: tuple[str, ...], cwd: pathlib.Path | None) -> str:
@@ -761,6 +828,7 @@ def test_update_dirty_target_fails_before_labels_or_files_change(
 
     assert calls == ["source_revision", "inspect"]
     assert not (target_root / installation.MANAGED_WORKFLOW).exists()
+    assert not (target_root / installation.MANAGED_ISSUE_TEMPLATE).exists()
 
 
 def test_update_dirty_source_fails_before_target_changes(
@@ -799,6 +867,7 @@ def test_update_dirty_source_fails_before_target_changes(
 
     assert calls == ["source_revision"]
     assert not (target_root / installation.MANAGED_WORKFLOW).exists()
+    assert not (target_root / installation.MANAGED_ISSUE_TEMPLATE).exists()
 
 
 def test_update_keeps_created_labels_when_later_git_operation_fails(
@@ -826,8 +895,11 @@ def test_update_keeps_created_labels_when_later_git_operation_fails(
     )
     monkeypatch.setattr(
         installation,
-        "render_workflow",
-        lambda revision: "canonical abc123\n",
+        "render_managed_files",
+        lambda revision: {
+            installation.MANAGED_WORKFLOW: "canonical abc123\n",
+            installation.MANAGED_ISSUE_TEMPLATE: "template\n",
+        },
     )
     monkeypatch.setattr(
         installation.repository,

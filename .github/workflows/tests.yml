@@ -24,7 +24,7 @@ jobs:
           enable-cache: true
       - run: uv sync --locked --dev
       - run: uv run pytest
-      - name: Verify packaged web application
+      - name: Verify packaged resources
         run: |
           uv build --out-dir "$RUNNER_TEMP/dist"
           WHEEL="$(find "$RUNNER_TEMP/dist" -name '*.whl' -print -quit)" \
@@ -33,6 +33,7 @@ jobs:
           import zipfile
 
           required = {
+              "tech_sonar/issue_templates/technology.yml",
               "tech_sonar/web/index.html",
               "tech_sonar/web/package.json",
               "tech_sonar/web/package-lock.json",
@@ -42,7 +43,7 @@ jobs:
           with zipfile.ZipFile(os.environ["WHEEL"]) as wheel:
               missing = required.difference(wheel.namelist())
           if missing:
-              raise SystemExit(f"wheel is missing web resources: {sorted(missing)}")
+              raise SystemExit(f"wheel is missing resources: {sorted(missing)}")
           PY
 
   web:
