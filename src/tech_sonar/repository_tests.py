@@ -330,19 +330,30 @@ def test_create_branch_switches_to_new_branch(tmp_path: pathlib.Path) -> None:
     assert runner.calls == [(command, tmp_path)]
 
 
-def test_commit_and_push_stages_only_managed_workflow(
+def test_commit_and_push_stages_only_managed_files(
     tmp_path: pathlib.Path,
 ) -> None:
+    managed_paths = (
+        pathlib.Path(".github/workflows/tech-sonar.yml"),
+        pathlib.Path(".github/ISSUE_TEMPLATE/technology.yml"),
+    )
     commands = [
-        ("git", "add", "--", ".github/workflows/tech-sonar.yml"),
-        ("git", "commit", "-m", "chore: install Tech Sonar workflow"),
+        (
+            "git",
+            "add",
+            "--",
+            ".github/workflows/tech-sonar.yml",
+            ".github/ISSUE_TEMPLATE/technology.yml",
+        ),
+        ("git", "commit", "-m", "chore: install Tech Sonar"),
         ("git", "push", "-u", "origin", "HEAD"),
     ]
     runner = FakeRunner({command: "" for command in commands})
 
     repository.commit_and_push(
         tmp_path,
-        "chore: install Tech Sonar workflow",
+        "chore: install Tech Sonar",
+        managed_paths,
         runner,
     )
 

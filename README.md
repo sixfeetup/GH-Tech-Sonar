@@ -40,7 +40,11 @@ For installation and updates, the selected Tech Sonar source checkout must be
 clean and have a committed `HEAD`.
 
 Installation clones the target into `./REPOSITORY`, creates any missing status
-labels, and proposes the managed workflow on a new branch and pull request.
+labels, and proposes the managed workflow and Technology issue form on a new
+branch and pull request. The issue form applies `SONAR EXPLORE` by default and
+prompts authors to select manually maintained category labels in GitHub's label
+sidebar.
+
 Label changes take effect immediately and are not rolled back if a later step
 fails. Existing labels are preserved, including their colors and descriptions.
 Category labels are created and maintained manually.
@@ -84,10 +88,9 @@ published, select the Tech Sonar source checkout with `--project`:
 uv run --project /path/to/GH-Tech-Sonar tech-sonar update
 ```
 
-Updates create missing labels and compare the installed workflow with the
-canonical workflow from the running Tech Sonar revision. The canonical content
-overwrites `.github/workflows/tech-sonar.yml`; the change is made through a
-branch and pull request.
+Updates create missing labels and compare the installed workflow and Technology
+issue form with the canonical files from the running Tech Sonar revision.
+Canonical content replaces both managed files through a branch and pull request.
 
 On the default branch, an update creates a new installation branch. On a
 non-default branch, it updates that branch and either updates its existing pull
