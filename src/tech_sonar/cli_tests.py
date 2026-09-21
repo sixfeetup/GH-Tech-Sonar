@@ -131,7 +131,7 @@ def test_publish_reports_errors(
     assert captured.err == f"error: {error}\n"
 
 
-def test_install_prints_pull_request_url(
+def test_install_prints_pull_request_url_and_warnings(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: pathlib.Path,
     capsys: pytest.CaptureFixture[str],
@@ -142,15 +142,20 @@ def test_install_prints_pull_request_url(
         target: model.Repository,
         parent: pathlib.Path,
         source_root: pathlib.Path,
-    ) -> str:
+    ) -> installation.InstallationResult:
         calls.append((target, parent, source_root))
-        return "https://github.com/o/r/pull/1"
+        return installation.InstallationResult(
+            "https://github.com/o/r/pull/1",
+            ("Technology template was omitted.",),
+        )
 
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(cli.installation, "install", install)
 
     assert cli.main(["install", "sixfeetup/GH-Tech-Sonar"]) == 0
-    assert capsys.readouterr().out == "https://github.com/o/r/pull/1\n"
+    captured = capsys.readouterr()
+    assert captured.out == "https://github.com/o/r/pull/1\n"
+    assert captured.err == "warning: Technology template was omitted.\n"
     assert calls == [
         (
             model.Repository("sixfeetup", "GH-Tech-Sonar"),

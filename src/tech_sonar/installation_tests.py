@@ -94,6 +94,86 @@ def test_render_managed_files_includes_technology_issue_form() -> None:
     assert "label: Required skills" in template
 
 
+def test_render_installation_files_preserves_inherited_templates(
+    tmp_path: pathlib.Path,
+) -> None:
+    response = """{
+      "data": {
+        "repository": {
+          "object": {
+            "entries": [
+              {
+                "name": "bug.yml",
+                "type": "blob",
+                "object": {"text": "name: Bug\\n"}
+              }
+            ]
+          }
+        }
+      }
+    }"""
+
+    files, warnings = installation.render_installation_files(
+        tmp_path,
+        "abc123",
+        "sixfeetup",
+        lambda arguments, cwd: response,
+    )
+
+    assert files[pathlib.Path(".github/ISSUE_TEMPLATE/bug.yml")] == (
+        "name: Bug\n"
+    )
+    assert installation.MANAGED_ISSUE_TEMPLATE in files
+    assert warnings == ()
+
+
+def test_render_installation_files_skips_inheritance_for_nonempty_directory(
+    tmp_path: pathlib.Path,
+) -> None:
+    existing = tmp_path / ".github/ISSUE_TEMPLATE/existing.yml"
+    existing.parent.mkdir(parents=True)
+    existing.write_text("name: Existing\n", encoding="utf-8")
+
+    def unexpected_run(
+        arguments: tuple[str, ...],
+        cwd: pathlib.Path | None,
+    ) -> str:
+        pytest.fail("queried inherited templates for a nonempty directory")
+
+    files, warnings = installation.render_installation_files(
+        tmp_path,
+        "abc123",
+        "sixfeetup",
+        unexpected_run,
+    )
+
+    assert tuple(files) == (
+        installation.MANAGED_WORKFLOW,
+        installation.MANAGED_ISSUE_TEMPLATE,
+    )
+    assert warnings == ()
+
+
+def test_render_installation_files_omits_template_when_source_unavailable(
+    tmp_path: pathlib.Path,
+) -> None:
+    response = '{"data": {"repository": null}}'
+
+    files, warnings = installation.render_installation_files(
+        tmp_path,
+        "abc123",
+        "sixfeetup",
+        lambda arguments, cwd: response,
+    )
+
+    assert tuple(files) == (installation.MANAGED_WORKFLOW,)
+    assert warnings == (
+        "Technology issue template was not installed because "
+        "sixfeetup/.github could not be accessed; installing it could hide "
+        "inherited issue templates.",
+    )
+
+
 def test_render_workflow_replaces_revision_marker() -> None:
     workflow = installation.render_workflow("abc123")
 
@@ -226,16 +306,31 @@ def test_install_orchestrates_repository_changes_in_order(
         )
         calls.append("create_branch")
 
+    inherited_template = pathlib.Path(
+        ".github/ISSUE_TEMPLATE/bug.yml",
+    )
+    install_files = {
+        installation.MANAGED_WORKFLOW: "workflow abc123\n",
+        inherited_template: "name: Bug\n",
+        installation.MANAGED_ISSUE_TEMPLATE: "name: Technology\n",
+    }
+
+    def render_installation_files(
+        root: pathlib.Path,
+        revision: str,
+        owner: str,
+        run: repository.CommandRunner,
+    ) -> tuple[dict[pathlib.Path, str], tuple[str, ...]]:
+        assert (root, revision, owner) == (clone_root, "abc123", "sixfeetup")
+        calls.append("render_installation_files")
+        return install_files, ("installation warning",)
+
     def write_managed_files(
         root: pathlib.Path,
         contents: dict[pathlib.Path, str],
     ) -> None:
         assert root == clone_root
-        assert tuple(contents) == (
-            installation.MANAGED_WORKFLOW,
-            installation.MANAGED_ISSUE_TEMPLATE,
-        )
-        assert "abc123" in contents[installation.MANAGED_WORKFLOW]
+        assert contents == install_files
         calls.append("write_managed_files")
 
     def commit_and_push(
@@ -246,10 +341,7 @@ def test_install_orchestrates_repository_changes_in_order(
     ) -> None:
         assert root == clone_root
         assert message == "chore: install Tech Sonar"
-        assert tuple(managed_paths) == (
-            installation.MANAGED_WORKFLOW,
-            installation.MANAGED_ISSUE_TEMPLATE,
-        )
+        assert tuple(managed_paths) == tuple(install_files)
         calls.append("commit_and_push")
 
     def open_pull_request(
@@ -277,6 +369,11 @@ def test_install_orchestrates_repository_changes_in_order(
     monkeypatch.setattr(installation.repository, "create_branch", create_branch)
     monkeypatch.setattr(
         installation,
+        "render_installation_files",
+        render_installation_files,
+    )
+    monkeypatch.setattr(
+        installation,
         "write_managed_files",
         write_managed_files,
     )
@@ -298,7 +395,10 @@ def test_install_orchestrates_repository_changes_in_order(
         run=lambda arguments, cwd: "",
     )
 
-    assert result == "https://github.com/sixfeetup/example/pull/1"
+    assert result == installation.InstallationResult(
+        "https://github.com/sixfeetup/example/pull/1",
+        ("installation warning",),
+    )
     assert calls == [
         "source_revision",
         "clone",
@@ -306,6 +406,7 @@ def test_install_orchestrates_repository_changes_in_order(
         "reconcile_labels",
         "unique_branch",
         "create_branch",
+        "render_installation_files",
         "write_managed_files",
         "commit_and_push",
         "open_pull_request",
@@ -443,6 +544,54 @@ def test_unique_branch_retries_when_suffixed_candidate_exists(
     ]
 
 
+def test_update_preserves_inheritance_when_template_was_omitted(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+) -> None:
+    target_root = tmp_path / "target"
+    target_root.mkdir()
+    workflow = installation.render_workflow("abc123")
+    installation.write_managed_files(
+        target_root,
+        {installation.MANAGED_WORKFLOW: workflow},
+    )
+    state = repository.State(
+        root=target_root,
+        repository=model.Repository("sixfeetup", "example"),
+        default_branch="main",
+        current_branch="main",
+    )
+    monkeypatch.setattr(
+        installation.repository,
+        "source_revision",
+        lambda root, run: "abc123",
+    )
+    monkeypatch.setattr(
+        installation.repository,
+        "inspect",
+        lambda root, run: state,
+    )
+    monkeypatch.setattr(
+        installation,
+        "reconcile_labels",
+        lambda root, run: None,
+    )
+    monkeypatch.setattr(
+        installation,
+        "unique_branch",
+        lambda *args: pytest.fail("update treated the omitted template as stale"),
+    )
+
+    result = installation.update(
+        target_root,
+        tmp_path / "source",
+        lambda arguments, cwd: '{"data": {"repository": null}}',
+    )
+
+    assert result is None
+    assert not (target_root / installation.MANAGED_ISSUE_TEMPLATE).exists()
+
+
 def test_update_reconciles_labels_before_canonical_no_op(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: pathlib.Path,
@@ -521,6 +670,9 @@ def test_update_default_branch_creates_branch_before_writing(
     source_root = tmp_path / "source"
     target_root = tmp_path / "target"
     target_root.mkdir()
+    installed_template = target_root / installation.MANAGED_ISSUE_TEMPLATE
+    installed_template.parent.mkdir(parents=True)
+    installed_template.write_text("old template\n", encoding="utf-8")
     canonical = {
         installation.MANAGED_WORKFLOW: "canonical abc123\n",
         installation.MANAGED_ISSUE_TEMPLATE: "template\n",
@@ -644,6 +796,9 @@ def test_update_non_default_branch_writes_without_creating_branch(
 ) -> None:
     target_root = tmp_path / "target"
     target_root.mkdir()
+    installed_template = target_root / installation.MANAGED_ISSUE_TEMPLATE
+    installed_template.parent.mkdir(parents=True)
+    installed_template.write_text("old template\n", encoding="utf-8")
     canonical = {
         installation.MANAGED_WORKFLOW: "canonical abc123\n",
         installation.MANAGED_ISSUE_TEMPLATE: "template\n",
@@ -743,6 +898,9 @@ def test_update_returns_existing_open_pull_request(
 ) -> None:
     target_root = tmp_path / "target"
     target_root.mkdir()
+    installed_template = target_root / installation.MANAGED_ISSUE_TEMPLATE
+    installed_template.parent.mkdir(parents=True)
+    installed_template.write_text("old template\n", encoding="utf-8")
     commands: list[tuple[str, ...]] = []
     existing_url = "https://github.com/sixfeetup/example/pull/4"
 
@@ -876,6 +1034,9 @@ def test_update_keeps_created_labels_when_later_git_operation_fails(
 ) -> None:
     target_root = tmp_path / "target"
     target_root.mkdir()
+    installed_template = target_root / installation.MANAGED_ISSUE_TEMPLATE
+    installed_template.parent.mkdir(parents=True)
+    installed_template.write_text("old template\n", encoding="utf-8")
     created_labels: list[str] = []
 
     monkeypatch.setattr(

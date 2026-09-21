@@ -45,6 +45,13 @@ branch and pull request. The issue form applies `SONAR EXPLORE` by default and
 prompts authors to select manually maintained category labels in GitHub's label
 sidebar.
 
+Adding a repository issue form disables issue templates inherited from the
+owner's `.github` repository. If the target has no issue templates, Tech Sonar
+first copies the owner's templates into the pull request. These copies are not
+managed by later updates. If the `.github` repository cannot be inspected,
+Tech Sonar preserves possible inherited templates by omitting the Technology
+form and printing a warning; the rest of the installation continues.
+
 Label changes take effect immediately and are not rolled back if a later step
 fails. Existing labels are preserved, including their colors and descriptions.
 Category labels are created and maintained manually.
@@ -88,9 +95,11 @@ published, select the Tech Sonar source checkout with `--project`:
 uv run --project /path/to/GH-Tech-Sonar tech-sonar update
 ```
 
-Updates create missing labels and compare the installed workflow and Technology
-issue form with the canonical files from the running Tech Sonar revision.
-Canonical content replaces both managed files through a branch and pull request.
+Updates create missing labels and compare installed managed files with their
+canonical versions from the running Tech Sonar revision. Canonical content
+replaces those files through a branch and pull request. When adding a missing
+Technology form, update applies the same inherited-template safeguards as
+installation.
 
 On the default branch, an update creates a new installation branch. On a
 non-default branch, it updates that branch and either updates its existing pull
