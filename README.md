@@ -127,3 +127,11 @@ rm -rf "$(dirname "$artifact")"
 
 See the [GitHub issue data model](docs/github-issue-data-model.md) for source
 semantics and the generated JSON fields.
+
+## Event filtering
+
+The managed workflow skips non-Sonar issue events before allocating a runner.
+It also skips PR pushes and edits unrelated to the PR title or body. PRs affect
+Sonar ADR evidence only through local `#<digits>` references in their title or
+body. Accepted PR events run targeted relevance detection before full snapshot
+generation.
