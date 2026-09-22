@@ -138,6 +138,52 @@ class GitHubClient:
                 "GitHub returned an incomplete or malformed response",
             ) from error
 
+    def fetch_issue_labels(
+        self,
+        repository: model.Repository,
+        issue_number: int,
+    ) -> tuple[model.Label, ...] | None:
+        try:
+            return self._fetch_issue_labels(repository, issue_number)
+        except (KeyError, TypeError, ValueError) as error:
+            raise GitHubError(
+                "GitHub returned an incomplete or malformed response",
+            ) from error
+
+    def _fetch_issue_labels(
+        self,
+        repository: model.Repository,
+        issue_number: int,
+    ) -> tuple[model.Label, ...] | None:
+        labels: list[model.Label] = []
+        after: str | None = None
+        while True:
+            data = self._graphql(
+                LABELS_QUERY,
+                owner=repository.owner,
+                name=repository.name,
+                number=issue_number,
+                after=after,
+            )
+            issue = data["repository"]["issue"]
+            if issue is None:
+                if after is None:
+                    return None
+                raise TypeError("issue disappeared during label pagination")
+            connection = issue["labels"]
+            labels.extend(
+                self._parse_label(node)
+                for node in connection["nodes"]
+            )
+            page = connection["pageInfo"]
+            if not page["hasNextPage"]:
+                return tuple(labels)
+            after = page["endCursor"]
+            if not after:
+                raise GitHubError(
+                    "GitHub label pagination continued without an end cursor",
+                )
+
     def _fetch_issues(
         self,
         repository: model.Repository,

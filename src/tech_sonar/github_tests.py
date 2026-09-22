@@ -69,6 +69,118 @@ def issue_response(node: dict[str, object]) -> httpx.Response:
     )
 
 
+def issue_labels_data(
+    labels: list[dict[str, object]],
+    *,
+    has_next: bool = False,
+    cursor: str | None = None,
+) -> dict[str, object]:
+    return {
+        "repository": {
+            "issue": {
+                "labels": {
+                    "nodes": labels,
+                    "pageInfo": {
+                        "hasNextPage": has_next,
+                        "endCursor": cursor,
+                    },
+                },
+            },
+        },
+    }
+
+
+def test_fetch_issue_labels_returns_labels() -> None:
+    client = github.GitHubClient(
+        "token",
+        transport=httpx.MockTransport(
+            lambda request: response(
+                issue_labels_data(
+                    [
+                        {
+                            "name": "SONAR EXPLORE",
+                            "color": "ededed",
+                            "description": "Under evaluation",
+                        },
+                    ],
+                ),
+            ),
+        ),
+    )
+
+    assert client.fetch_issue_labels(REPOSITORY, 17) == (
+        model.Label(
+            name="SONAR EXPLORE",
+            color="ededed",
+            description="Under evaluation",
+        ),
+    )
+
+
+def test_fetch_issue_labels_returns_none_for_missing_issue() -> None:
+    client = github.GitHubClient(
+        "token",
+        transport=httpx.MockTransport(
+            lambda request: response({"repository": {"issue": None}}),
+        ),
+    )
+
+    assert client.fetch_issue_labels(REPOSITORY, 17) is None
+
+
+def test_fetch_issue_labels_paginates_labels() -> None:
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        payload = json.loads(request.content)
+        variables = payload["variables"]
+        if variables["after"] is None:
+            return response(
+                issue_labels_data(
+                    [
+                        {
+                            "name": "documentation",
+                            "color": "0075ca",
+                            "description": None,
+                        },
+                    ],
+                    has_next=True,
+                    cursor="label-page-2",
+                ),
+            )
+        assert variables == {
+            "owner": "sixfeetup",
+            "name": "sonar",
+            "number": 17,
+            "after": "label-page-2",
+        }
+        return response(
+            issue_labels_data(
+                [
+                    {
+                        "name": "SONAR EXPLORE",
+                        "color": "ededed",
+                        "description": "Under evaluation",
+                    },
+                ],
+            ),
+        )
+
+    client = github.GitHubClient(
+        "token",
+        transport=httpx.MockTransport(handler),
+    )
+
+    labels = client.fetch_issue_labels(REPOSITORY, 17)
+
+    assert len(requests) == 2
+    assert [label.name for label in labels or ()] == [
+        "documentation",
+        "SONAR EXPLORE",
+    ]
+
+
 def test_fetch_issues_paginates_collection() -> None:
     requests: list[httpx.Request] = []
 
