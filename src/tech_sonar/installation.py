@@ -21,6 +21,12 @@ class InstallationError(RuntimeError):
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
+class InstallationResult:
+    pull_request: str
+    warnings: tuple[str, ...]
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
 class LabelSpec:
     name: str
     color: str
@@ -74,6 +80,28 @@ def render_managed_files(revision: str) -> dict[pathlib.Path, str]:
         MANAGED_WORKFLOW: render_workflow(revision),
         MANAGED_ISSUE_TEMPLATE: template.read_text(encoding="utf-8"),
     }
+
+
+def render_installation_files(
+    root: pathlib.Path,
+    revision: str,
+    owner: str,
+    run: repository.CommandRunner = repository.run_command,
+) -> tuple[dict[pathlib.Path, str], tuple[str, ...]]:
+    managed = render_managed_files(revision)
+    template_directory = root / MANAGED_ISSUE_TEMPLATE.parent
+    if template_directory.exists() and any(template_directory.iterdir()):
+        return managed, ()
+    inherited = repository.inherited_issue_templates(owner, run)
+    if inherited is None:
+        del managed[MANAGED_ISSUE_TEMPLATE]
+        warning = (
+            "Technology issue template was not installed because "
+            f"{owner}/.github could not be accessed; installing it could "
+            "hide inherited issue templates."
+        )
+        return managed, (warning,)
+    return inherited | managed, ()
 
 
 def managed_files_are_current(
@@ -134,7 +162,7 @@ def install(
     parent: pathlib.Path,
     source_root: pathlib.Path,
     run: repository.CommandRunner = repository.run_command,
-) -> str:
+) -> InstallationResult:
     revision = repository.source_revision(source_root, run)
     clone_root = repository.clone(target, parent / target.name, run)
     state = repository.inspect(clone_root, run)
@@ -151,15 +179,20 @@ def install(
         run,
     )
     repository.create_branch(state.root, branch, run)
-    managed_files = render_managed_files(revision)
-    write_managed_files(state.root, managed_files)
+    install_files, warnings = render_installation_files(
+        state.root,
+        revision,
+        target.owner,
+        run,
+    )
+    write_managed_files(state.root, install_files)
     repository.commit_and_push(
         state.root,
         "chore: install Tech Sonar",
-        managed_files,
+        install_files,
         run,
     )
-    return repository.open_pull_request(
+    pull_request = repository.open_pull_request(
         state.root,
         branch=branch,
         base=state.default_branch,
@@ -167,6 +200,7 @@ def install(
         body="Installs files managed by Tech Sonar.",
         run=run,
     )
+    return InstallationResult(pull_request, warnings)
 
 
 def update(
@@ -176,7 +210,15 @@ def update(
 ) -> str | None:
     revision = repository.source_revision(source_root, run)
     state = repository.inspect(target_root, run)
-    managed_files = render_managed_files(revision)
+    if (state.root / MANAGED_ISSUE_TEMPLATE).exists():
+        managed_files = render_managed_files(revision)
+    else:
+        managed_files, _warnings = render_installation_files(
+            state.root,
+            revision,
+            state.repository.owner,
+            run,
+        )
 
     reconcile_labels(state.root, run)
     if managed_files_are_current(state.root, managed_files):
