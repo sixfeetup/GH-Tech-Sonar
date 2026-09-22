@@ -1,9 +1,11 @@
-# Use Tech Sonar
+# Using Tech Sonar
 
 Tech Sonar helps you see which technologies your organization has approved,
 is evaluating, has paused, or does not recommend. Each item comes from a GitHub
 issue in the Sonar's source repository, so you can use GitHub to propose a
 technology, record guidance, and discuss changes.
+
+Technology can be software, hardware, or techniques.
 
 ## Browse the Sonar
 
@@ -31,6 +33,11 @@ GitHub** to read its discussion or make changes.
 
 The form assigns `SONAR EXPLORE` by default. After the publishing workflow
 finishes successfully, the issue appears in the `EXPLORE` band.
+
+## Share your experience with a technology
+
+If you've used a technology, share your experience by commenting on a
+technology issue.
 
 ## Manage a technology's status
 
