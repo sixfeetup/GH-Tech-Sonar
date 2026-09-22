@@ -73,14 +73,39 @@ def _event_text(event: object) -> tuple[str, ...]:
     return tuple(text)
 
 
-def candidate_issue_numbers(event: object) -> tuple[int, ...]:
-    _event_repository(event)
+def _issue_numbers(texts: tuple[str, ...]) -> tuple[int, ...]:
     numbers = [
         int(match.group(1))
-        for text in _event_text(event)
+        for text in texts
         for match in _REFERENCE.finditer(text)
     ]
     return tuple(dict.fromkeys(numbers))
+
+
+def _references(text: str | None) -> frozenset[int]:
+    return frozenset(_issue_numbers((text,))) if text is not None else frozenset()
+
+
+def _body_edit_keeps_references(event: object) -> bool:
+    assert isinstance(event, dict)
+    if event["action"] != "edited":
+        return False
+    changes = event["changes"]
+    assert isinstance(changes, dict)
+    if set(changes) != {"body"}:
+        return False
+    body_change = changes["body"]
+    pull_request = event["pull_request"]
+    assert isinstance(body_change, dict)
+    assert isinstance(pull_request, dict)
+    return _references(body_change["from"]) == _references(
+        pull_request["body"],
+    )
+
+
+def candidate_issue_numbers(event: object) -> tuple[int, ...]:
+    _event_repository(event)
+    return _issue_numbers(_event_text(event))
 
 
 IssueLabelFetcher = collections.abc.Callable[
@@ -94,7 +119,10 @@ def pull_request_event_is_relevant(
     fetch_issue_labels: IssueLabelFetcher,
 ) -> bool:
     repository = _event_repository(event)
-    for number in candidate_issue_numbers(event):
+    texts = _event_text(event)
+    if _body_edit_keeps_references(event):
+        return False
+    for number in _issue_numbers(texts):
         labels = fetch_issue_labels(repository, number)
         if labels is not None and any(
             label.name in _STATUS_LABELS for label in labels
