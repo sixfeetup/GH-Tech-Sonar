@@ -121,11 +121,52 @@ def test_fetch_issue_labels_returns_none_for_missing_issue() -> None:
     client = github.GitHubClient(
         "token",
         transport=httpx.MockTransport(
-            lambda request: response({"repository": {"issue": None}}),
+            lambda request: httpx.Response(
+                200,
+                json={
+                    "data": {"repository": {"issue": None}},
+                    "errors": [
+                        {
+                            "type": "NOT_FOUND",
+                            "path": ["repository", "issue"],
+                            "locations": [{"line": 8, "column": 5}],
+                            "message": (
+                                "Could not resolve to an Issue with the number "
+                                "of 17."
+                            ),
+                        },
+                    ],
+                },
+            ),
         ),
     )
 
     assert client.fetch_issue_labels(REPOSITORY, 17) is None
+
+
+def test_fetch_issue_labels_propagates_other_graphql_errors() -> None:
+    client = github.GitHubClient(
+        "token",
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(
+                200,
+                json={
+                    "data": {"repository": {"issue": None}},
+                    "errors": [
+                        {
+                            "type": "FORBIDDEN",
+                            "path": ["repository", "issue"],
+                            "locations": [{"line": 8, "column": 5}],
+                            "message": "Resource not accessible",
+                        },
+                    ],
+                },
+            ),
+        ),
+    )
+
+    with pytest.raises(github.GitHubError, match="Resource not accessible"):
+        client.fetch_issue_labels(REPOSITORY, 17)
 
 
 def test_fetch_issue_labels_rejects_malformed_label_name() -> None:

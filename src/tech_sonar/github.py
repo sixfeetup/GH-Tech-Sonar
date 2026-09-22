@@ -160,6 +160,7 @@ class GitHubClient:
         while True:
             data = self._graphql(
                 LABELS_QUERY,
+                allow_missing_issue=True,
                 owner=repository.owner,
                 name=repository.name,
                 number=issue_number,
@@ -211,7 +212,13 @@ class GitHubClient:
                     "GitHub issue pagination continued without an end cursor",
                 )
 
-    def _graphql(self, query: str, **variables: object) -> dict[str, Any]:
+    def _graphql(
+        self,
+        query: str,
+        *,
+        allow_missing_issue: bool = False,
+        **variables: object,
+    ) -> dict[str, Any]:
         repository = f"{variables.get('owner')}/{variables.get('name')}"
         try:
             response = self._client.post(
@@ -229,7 +236,14 @@ class GitHubClient:
             if not isinstance(result, dict):
                 raise TypeError("GraphQL response is not an object")
             errors = result.get("errors")
-            if errors:
+            missing_issue = (
+                allow_missing_issue
+                and isinstance(errors, list)
+                and len(errors) == 1
+                and errors[0].get("type") == "NOT_FOUND"
+                and errors[0].get("path") == ["repository", "issue"]
+            )
+            if errors and not missing_issue:
                 message = errors[0]["message"]
                 raise GitHubError(
                     f"GitHub GraphQL request for {repository} failed: {message}",
