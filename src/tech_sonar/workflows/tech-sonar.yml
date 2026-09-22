@@ -16,7 +16,6 @@ on:
     types:
       - opened
       - edited
-      - synchronize
       - reopened
       - closed
 
@@ -31,20 +30,78 @@ permissions:
 
 jobs:
   update-tech-sonar:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event_name == 'issues' &&
+        (
+          contains(github.event.issue.labels.*.name, 'SONAR REJECT') ||
+          contains(github.event.issue.labels.*.name, 'SONAR HOLD') ||
+          contains(github.event.issue.labels.*.name, 'SONAR EXPLORE') ||
+          contains(github.event.issue.labels.*.name, 'SONAR PROPOSE') ||
+          contains(github.event.issue.labels.*.name, 'SONAR ADOPT') ||
+          (
+            github.event.action == 'unlabeled' &&
+            (
+              github.event.label.name == 'SONAR REJECT' ||
+              github.event.label.name == 'SONAR HOLD' ||
+              github.event.label.name == 'SONAR EXPLORE' ||
+              github.event.label.name == 'SONAR PROPOSE' ||
+              github.event.label.name == 'SONAR ADOPT'
+            )
+          )
+        )
+      ) ||
+      (
+        github.event_name == 'pull_request' &&
+        (
+          github.event.action == 'opened' ||
+          github.event.action == 'closed' ||
+          github.event.action == 'reopened' ||
+          (
+            github.event.action == 'edited' &&
+            (
+              github.event.changes.title != null ||
+              github.event.changes.body != null
+            )
+          )
+        )
+      )
     runs-on: ubuntu-latest
     env:
       TECH_SONAR_PACKAGE: >-
         tech-sonar @ git+https://github.com/sixfeetup/GH-Tech-Sonar.git@__TECH_SONAR_REVISION__
     steps:
-      - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
           python-version: "3.14"
+      - name: Determine PR relevance
+        if: github.event_name == 'pull_request'
+        id: pr-relevance
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          relevant="$(
+            uv run \
+              --with "$TECH_SONAR_PACKAGE" \
+              tech-sonar pr-event-relevant "$GITHUB_EVENT_PATH"
+          )"
+          echo "relevant=$relevant" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        if: >-
+          github.event_name != 'pull_request' ||
+          steps.pr-relevance.outputs.relevant == 'true'
       - uses: actions/setup-node@v4
+        if: >-
+          github.event_name != 'pull_request' ||
+          steps.pr-relevance.outputs.relevant == 'true'
         with:
           node-version: 22
       - name: Generate Tech Sonar data
+        if: >-
+          github.event_name != 'pull_request' ||
+          steps.pr-relevance.outputs.relevant == 'true'
         id: generate
         env:
           GH_TOKEN: ${{ github.token }}
@@ -56,6 +113,9 @@ jobs:
           )"
           echo "artifact=$artifact" >> "$GITHUB_OUTPUT"
       - name: Build and publish Tech Sonar
+        if: >-
+          github.event_name != 'pull_request' ||
+          steps.pr-relevance.outputs.relevant == 'true'
         env:
           PUBLISH_ARGS: ${{ vars.PUBLISH_ARGS }}
           PUBLISH_SECRET: ${{ secrets.PUBLISH_SECRET }}
@@ -66,7 +126,12 @@ jobs:
               --output "$RUNNER_TEMP/tech-sonar-site" \
               --args "$PUBLISH_ARGS"
       - name: Upload assembled site for debugging
-        if: always()
+        if: >-
+          always() &&
+          (
+            github.event_name != 'pull_request' ||
+            steps.pr-relevance.outputs.relevant == 'true'
+          )
         uses: actions/upload-artifact@v4
         with:
           name: tech-sonar-site

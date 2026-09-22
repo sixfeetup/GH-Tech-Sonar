@@ -138,6 +138,53 @@ class GitHubClient:
                 "GitHub returned an incomplete or malformed response",
             ) from error
 
+    def fetch_issue_labels(
+        self,
+        repository: model.Repository,
+        issue_number: int,
+    ) -> tuple[model.Label, ...] | None:
+        try:
+            return self._fetch_issue_labels(repository, issue_number)
+        except (KeyError, TypeError, ValueError) as error:
+            raise GitHubError(
+                "GitHub returned an incomplete or malformed response",
+            ) from error
+
+    def _fetch_issue_labels(
+        self,
+        repository: model.Repository,
+        issue_number: int,
+    ) -> tuple[model.Label, ...] | None:
+        labels: list[model.Label] = []
+        after: str | None = None
+        while True:
+            data = self._graphql(
+                LABELS_QUERY,
+                allow_missing_issue=True,
+                owner=repository.owner,
+                name=repository.name,
+                number=issue_number,
+                after=after,
+            )
+            issue = data["repository"]["issue"]
+            if issue is None:
+                if after is None:
+                    return None
+                raise TypeError("issue disappeared during label pagination")
+            connection = issue["labels"]
+            labels.extend(
+                self._parse_label(node)
+                for node in connection["nodes"]
+            )
+            page = connection["pageInfo"]
+            if not page["hasNextPage"]:
+                return tuple(labels)
+            after = page["endCursor"]
+            if not after:
+                raise GitHubError(
+                    "GitHub label pagination continued without an end cursor",
+                )
+
     def _fetch_issues(
         self,
         repository: model.Repository,
@@ -165,7 +212,13 @@ class GitHubClient:
                     "GitHub issue pagination continued without an end cursor",
                 )
 
-    def _graphql(self, query: str, **variables: object) -> dict[str, Any]:
+    def _graphql(
+        self,
+        query: str,
+        *,
+        allow_missing_issue: bool = False,
+        **variables: object,
+    ) -> dict[str, Any]:
         repository = f"{variables.get('owner')}/{variables.get('name')}"
         try:
             response = self._client.post(
@@ -183,7 +236,14 @@ class GitHubClient:
             if not isinstance(result, dict):
                 raise TypeError("GraphQL response is not an object")
             errors = result.get("errors")
-            if errors:
+            missing_issue = (
+                allow_missing_issue
+                and isinstance(errors, list)
+                and len(errors) == 1
+                and errors[0].get("type") == "NOT_FOUND"
+                and errors[0].get("path") == ["repository", "issue"]
+            )
+            if errors and not missing_issue:
                 message = errors[0]["message"]
                 raise GitHubError(
                     f"GitHub GraphQL request for {repository} failed: {message}",
@@ -333,10 +393,19 @@ class GitHubClient:
 
     @staticmethod
     def _parse_label(node: dict[str, Any]) -> model.Label:
+        name = node["name"]
+        color = node["color"]
+        description = node["description"]
+        if not isinstance(name, str):
+            raise TypeError("label name is not a string")
+        if not isinstance(color, str):
+            raise TypeError("label color is not a string")
+        if description is not None and not isinstance(description, str):
+            raise TypeError("label description is not a string or null")
         return model.Label(
-            name=node["name"],
-            color=node["color"],
-            description=node["description"],
+            name=name,
+            color=color,
+            description=description,
         )
 
     @staticmethod

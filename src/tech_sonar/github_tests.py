@@ -69,6 +69,184 @@ def issue_response(node: dict[str, object]) -> httpx.Response:
     )
 
 
+def issue_labels_data(
+    labels: list[dict[str, object]],
+    *,
+    has_next: bool = False,
+    cursor: str | None = None,
+) -> dict[str, object]:
+    return {
+        "repository": {
+            "issue": {
+                "labels": {
+                    "nodes": labels,
+                    "pageInfo": {
+                        "hasNextPage": has_next,
+                        "endCursor": cursor,
+                    },
+                },
+            },
+        },
+    }
+
+
+def test_fetch_issue_labels_returns_labels() -> None:
+    client = github.GitHubClient(
+        "token",
+        transport=httpx.MockTransport(
+            lambda request: response(
+                issue_labels_data(
+                    [
+                        {
+                            "name": "SONAR EXPLORE",
+                            "color": "ededed",
+                            "description": "Under evaluation",
+                        },
+                    ],
+                ),
+            ),
+        ),
+    )
+
+    assert client.fetch_issue_labels(REPOSITORY, 17) == (
+        model.Label(
+            name="SONAR EXPLORE",
+            color="ededed",
+            description="Under evaluation",
+        ),
+    )
+
+
+def test_fetch_issue_labels_returns_none_for_missing_issue() -> None:
+    client = github.GitHubClient(
+        "token",
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(
+                200,
+                json={
+                    "data": {"repository": {"issue": None}},
+                    "errors": [
+                        {
+                            "type": "NOT_FOUND",
+                            "path": ["repository", "issue"],
+                            "locations": [{"line": 8, "column": 5}],
+                            "message": (
+                                "Could not resolve to an Issue with the number "
+                                "of 17."
+                            ),
+                        },
+                    ],
+                },
+            ),
+        ),
+    )
+
+    assert client.fetch_issue_labels(REPOSITORY, 17) is None
+
+
+def test_fetch_issue_labels_propagates_other_graphql_errors() -> None:
+    client = github.GitHubClient(
+        "token",
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(
+                200,
+                json={
+                    "data": {"repository": {"issue": None}},
+                    "errors": [
+                        {
+                            "type": "FORBIDDEN",
+                            "path": ["repository", "issue"],
+                            "locations": [{"line": 8, "column": 5}],
+                            "message": "Resource not accessible",
+                        },
+                    ],
+                },
+            ),
+        ),
+    )
+
+    with pytest.raises(github.GitHubError, match="Resource not accessible"):
+        client.fetch_issue_labels(REPOSITORY, 17)
+
+
+def test_fetch_issue_labels_rejects_malformed_label_name() -> None:
+    client = github.GitHubClient(
+        "token",
+        transport=httpx.MockTransport(
+            lambda request: response(
+                issue_labels_data(
+                    [
+                        {
+                            "name": None,
+                            "color": "ededed",
+                            "description": "Under evaluation",
+                        },
+                    ],
+                ),
+            ),
+        ),
+    )
+
+    with pytest.raises(
+        github.GitHubError,
+        match="GitHub returned an incomplete or malformed response",
+    ):
+        client.fetch_issue_labels(REPOSITORY, 17)
+
+
+def test_fetch_issue_labels_paginates_labels() -> None:
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        payload = json.loads(request.content)
+        variables = payload["variables"]
+        if variables["after"] is None:
+            return response(
+                issue_labels_data(
+                    [
+                        {
+                            "name": "documentation",
+                            "color": "0075ca",
+                            "description": None,
+                        },
+                    ],
+                    has_next=True,
+                    cursor="label-page-2",
+                ),
+            )
+        assert variables == {
+            "owner": "sixfeetup",
+            "name": "sonar",
+            "number": 17,
+            "after": "label-page-2",
+        }
+        return response(
+            issue_labels_data(
+                [
+                    {
+                        "name": "SONAR EXPLORE",
+                        "color": "ededed",
+                        "description": "Under evaluation",
+                    },
+                ],
+            ),
+        )
+
+    client = github.GitHubClient(
+        "token",
+        transport=httpx.MockTransport(handler),
+    )
+
+    labels = client.fetch_issue_labels(REPOSITORY, 17)
+
+    assert len(requests) == 2
+    assert [label.name for label in labels or ()] == [
+        "documentation",
+        "SONAR EXPLORE",
+    ]
+
+
 def test_fetch_issues_paginates_collection() -> None:
     requests: list[httpx.Request] = []
 

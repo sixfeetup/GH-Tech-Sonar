@@ -193,7 +193,7 @@ def test_render_workflow_replaces_revision_marker() -> None:
         'tech-sonar publish "${{ steps.generate.outputs.artifact }}"',
         '--output "$RUNNER_TEMP/tech-sonar-site"',
         '--args "$PUBLISH_ARGS"',
-        "if: always()",
+        "always()",
         "name: tech-sonar-site",
         "path: ${{ runner.temp }}/tech-sonar-site",
         "retention-days: 1",
@@ -201,6 +201,34 @@ def test_render_workflow_replaces_revision_marker() -> None:
         assert expected in workflow
 
     assert "tech-sonar-json" not in workflow
+
+
+def test_render_workflow_filters_irrelevant_events() -> None:
+    workflow = installation.render_workflow("abc123")
+
+    assert "      - synchronize\n" not in workflow
+    assert "github.event.changes.title != null" in workflow
+    assert "github.event.changes.body != null" in workflow
+    assert "github.event.issue.labels.*.name" in workflow
+    assert "github.event.label.name == 'SONAR EXPLORE'" in workflow
+    assert "name: Determine PR relevance" in workflow
+    assert 'tech-sonar pr-event-relevant "$GITHUB_EVENT_PATH"' in workflow
+    assert "steps.pr-relevance.outputs.relevant == 'true'" in workflow
+    for status in EXPECTED_LABELS:
+        assert status in workflow
+    for expected in (
+        "concurrency",
+        "cancel-in-progress: false",
+        "name: Generate Tech Sonar data",
+        "id: generate",
+        "tech-sonar generate",
+        "name: Build and publish Tech Sonar",
+        'tech-sonar publish "${{ steps.generate.outputs.artifact }}"',
+        "name: Upload assembled site for debugging",
+        "always()",
+        "actions/upload-artifact@v4",
+    ):
+        assert expected in workflow
 
 
 def test_managed_files_are_current_uses_exact_file_comparison(
