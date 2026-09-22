@@ -379,10 +379,19 @@ class GitHubClient:
 
     @staticmethod
     def _parse_label(node: dict[str, Any]) -> model.Label:
+        name = node["name"]
+        color = node["color"]
+        description = node["description"]
+        if not isinstance(name, str):
+            raise TypeError("label name is not a string")
+        if not isinstance(color, str):
+            raise TypeError("label color is not a string")
+        if description is not None and not isinstance(description, str):
+            raise TypeError("label description is not a string or null")
         return model.Label(
-            name=node["name"],
-            color=node["color"],
-            description=node["description"],
+            name=name,
+            color=color,
+            description=description,
         )
 
     @staticmethod

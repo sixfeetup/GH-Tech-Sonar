@@ -128,6 +128,31 @@ def test_fetch_issue_labels_returns_none_for_missing_issue() -> None:
     assert client.fetch_issue_labels(REPOSITORY, 17) is None
 
 
+def test_fetch_issue_labels_rejects_malformed_label_name() -> None:
+    client = github.GitHubClient(
+        "token",
+        transport=httpx.MockTransport(
+            lambda request: response(
+                issue_labels_data(
+                    [
+                        {
+                            "name": None,
+                            "color": "ededed",
+                            "description": "Under evaluation",
+                        },
+                    ],
+                ),
+            ),
+        ),
+    )
+
+    with pytest.raises(
+        github.GitHubError,
+        match="GitHub returned an incomplete or malformed response",
+    ):
+        client.fetch_issue_labels(REPOSITORY, 17)
+
+
 def test_fetch_issue_labels_paginates_labels() -> None:
     requests: list[httpx.Request] = []
 
