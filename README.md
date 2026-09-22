@@ -3,6 +3,9 @@
 Tech Sonar publishes an organization's technology decisions from GitHub issues
 as a static snapshot.
 
+See [Use Tech Sonar](docs/using-tech-sonar.md) to browse the Sonar and manage
+technology issues.
+
 ## Web application
 
 See the [web application guide](web/README.md) for frontend development, test,
