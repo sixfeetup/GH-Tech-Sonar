@@ -1,5 +1,6 @@
 import argparse
 import collections.abc
+import json
 import os
 import pathlib
 import sys
@@ -11,6 +12,7 @@ from tech_sonar import github
 from tech_sonar import installation
 from tech_sonar import model
 from tech_sonar import publishing
+from tech_sonar import relevance
 from tech_sonar import repository
 
 
@@ -34,6 +36,11 @@ def parser() -> argparse.ArgumentParser:
     install.add_argument("repository", type=repository_argument)
     commands.add_parser("update", help="update the Tech Sonar installation")
     commands.add_parser("generate", help="generate a static Sonar snapshot")
+    pr_event_relevant = commands.add_parser(
+        "pr-event-relevant",
+        help="check whether a pull-request event affects Tech Sonar",
+    )
+    pr_event_relevant.add_argument("event", type=pathlib.Path)
     publish = commands.add_parser(
         "publish",
         help="build and publish a Tech Sonar site",
@@ -66,6 +73,24 @@ def generate_command() -> int:
     return 0
 
 
+def pr_event_relevant_command(event_path: pathlib.Path) -> int:
+    try:
+        event = json.loads(event_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise relevance.RelevanceError(
+            f"invalid GitHub event JSON: {error}",
+        ) from error
+
+    token = auth.resolve_token(os.environ)
+    with github.GitHubClient(token) as client:
+        is_relevant = relevance.pull_request_event_is_relevant(
+            event,
+            client.fetch_issue_labels,
+        )
+    print(json.dumps(is_relevant))
+    return 0
+
+
 def main(argv: collections.abc.Sequence[str] | None = None) -> int:
     arguments = parser().parse_args(argv)
     try:
@@ -87,6 +112,8 @@ def main(argv: collections.abc.Sequence[str] | None = None) -> int:
             return 0
         if arguments.command == "generate":
             return generate_command()
+        if arguments.command == "pr-event-relevant":
+            return pr_event_relevant_command(arguments.event)
         if arguments.command == "publish":
             publisher_args = publishing.parse_publisher_args(
                 arguments.publisher_args,
@@ -106,6 +133,7 @@ def main(argv: collections.abc.Sequence[str] | None = None) -> int:
         github.GitHubError,
         publishing.PublishingError,
         cloudflare.CloudflarePublishingError,
+        relevance.RelevanceError,
         OSError,
     ) as error:
         print(f"error: {error}", file=sys.stderr)

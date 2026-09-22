@@ -1,3 +1,4 @@
+import json
 import pathlib
 
 import pytest
@@ -28,6 +29,88 @@ def test_parser_rejects_invalid_install_repository(
 
     assert error.value.code == 2
     assert "repository must use OWNER/REPOSITORY form" in capsys.readouterr().err
+
+
+def test_parser_accepts_pr_event_relevant_path() -> None:
+    arguments = cli.parser().parse_args(
+        ["pr-event-relevant", "event.json"],
+    )
+
+    assert arguments.command == "pr-event-relevant"
+    assert arguments.event == pathlib.Path("event.json")
+
+
+@pytest.mark.parametrize(
+    ("relevant_event", "output"),
+    [(True, "true\n"), (False, "false\n")],
+)
+def test_pr_event_relevant_prints_boolean(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: pathlib.Path,
+    capsys: pytest.CaptureFixture[str],
+    relevant_event: bool,
+    output: str,
+) -> None:
+    payload = {
+        "action": "opened",
+        "repository": {"full_name": "sixfeetup/sonar"},
+        "pull_request": {"title": "Use #12", "body": None},
+        "changes": {},
+    }
+    path = tmp_path / "event.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    fetched: list[tuple[model.Repository, int]] = []
+
+    class Client:
+        def __init__(self, token: str) -> None:
+            assert token == "token"
+
+        def __enter__(self) -> "Client":
+            return self
+
+        def __exit__(self, *arguments: object) -> None:
+            return None
+
+        def fetch_issue_labels(
+            self,
+            repository: model.Repository,
+            number: int,
+        ) -> tuple[model.Label, ...] | None:
+            fetched.append((repository, number))
+            return ()
+
+    def is_relevant(event: object, fetch: object) -> bool:
+        assert event == payload
+        assert callable(fetch)
+        fetch(model.Repository("sixfeetup", "sonar"), 12)
+        return relevant_event
+
+    monkeypatch.setattr(cli.auth, "resolve_token", lambda environ: "token")
+    monkeypatch.setattr(cli.github, "GitHubClient", Client)
+    monkeypatch.setattr(
+        cli.relevance,
+        "pull_request_event_is_relevant",
+        is_relevant,
+    )
+
+    assert cli.main(["pr-event-relevant", str(path)]) == 0
+    captured = capsys.readouterr()
+    assert captured.out == output
+    assert captured.err == ""
+    assert fetched == [(model.Repository("sixfeetup", "sonar"), 12)]
+
+
+def test_pr_event_relevant_reports_malformed_json(
+    tmp_path: pathlib.Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    path = tmp_path / "event.json"
+    path.write_text("{invalid", encoding="utf-8")
+
+    assert cli.main(["pr-event-relevant", str(path)]) == 1
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err.startswith("error: invalid GitHub event JSON:")
 
 
 def test_parser_accepts_publish_arguments() -> None:
