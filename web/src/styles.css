@@ -46,7 +46,7 @@ select {
 
 .controls input,
 .controls select,
-.controls > button,
+.contribute-toggle,
 .view-toggle button {
   box-sizing: border-box;
   min-height: 2.5rem;
@@ -61,8 +61,13 @@ select {
   padding: 0.4rem 0.6rem;
 }
 
-.controls > button {
+.contribution-control {
+  position: relative;
+}
+
+.contribute-toggle {
   padding: 0.4rem 0.8rem;
+  font-weight: 700;
 }
 
 .view-toggle {
@@ -82,19 +87,24 @@ select {
   color: #06170f;
 }
 
-dialog {
-  width: min(32rem, calc(100% - 4rem));
+.contribution-popover {
+  position: absolute;
+  z-index: 10;
+  inset: calc(100% + 0.5rem) 0 auto auto;
+  box-sizing: border-box;
+  width: min(32rem, calc(100vw - 4rem));
+  margin: 0;
   border: 1px solid #397654;
   border-radius: 0.4rem;
   background: #0a2117;
   color: inherit;
 }
 
-dialog h2 {
+.contribution-popover h2 {
   margin-top: 0;
 }
 
-dialog button {
+.contribution-popover button {
   min-height: 2.5rem;
   padding: 0.4rem 0.8rem;
   border: 1px solid #397654;
@@ -255,6 +265,11 @@ dialog button {
 
   .controls > * {
     min-width: 0;
+  }
+
+  .contribution-popover {
+    right: auto;
+    left: 0;
   }
 
   .sonar-view {

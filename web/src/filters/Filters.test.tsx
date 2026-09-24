@@ -57,7 +57,7 @@ describe("Filters", () => {
       screen.getByRole("combobox", { name: "Category" }),
       screen.getByLabelText("Updated since"),
       screen.getByRole("combobox", { name: "Status" }),
-      screen.getByRole("button", { name: "Contribute" }),
+      screen.getByRole("button", { name: "Contribute!" }),
     ]);
   });
 

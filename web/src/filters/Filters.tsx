@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import type { Status } from "../data/sonar";
 import type {
   CategoryFilter,
@@ -16,6 +18,7 @@ const statuses: Status[] = [
 
 interface FiltersProps {
   categories: string[];
+  contribution?: ReactNode;
   filters: FilterState;
   onContribute: (trigger: HTMLButtonElement) => void;
   onFiltersChange: (filters: FilterState) => void;
@@ -25,6 +28,7 @@ interface FiltersProps {
 
 export function Filters({
   categories,
+  contribution,
   filters,
   onContribute,
   onFiltersChange,
@@ -104,12 +108,18 @@ export function Filters({
         </select>
       </label>
 
-      <button
-        type="button"
-        onClick={(event) => onContribute(event.currentTarget)}
-      >
-        Contribute
-      </button>
+      <div className="contribution-control">
+        <button
+          aria-controls="contribution-popover"
+          aria-expanded={Boolean(contribution)}
+          className="contribute-toggle"
+          type="button"
+          onClick={(event) => onContribute(event.currentTarget)}
+        >
+          Contribute!
+        </button>
+        {contribution}
+      </div>
     </section>
   );
 }

@@ -45,6 +45,35 @@ test("loads the fixture and toggles between Sonar and List", async ({
   ).toBeVisible();
 });
 
+test("anchors the contribution popover below its bold action", async (
+  { page },
+  testInfo,
+) => {
+  await loadSonar(page);
+
+  const contribute = page.getByRole("button", { name: "Contribute!" });
+  await expect(contribute).toHaveCSS("font-weight", "700");
+  await contribute.click();
+
+  const buttonBox = await contribute.boundingBox();
+  const popoverBox = await page
+    .getByRole("dialog", { name: "Contribute" })
+    .boundingBox();
+  expect(buttonBox).not.toBeNull();
+  expect(popoverBox).not.toBeNull();
+  expect(popoverBox!.y).toBeGreaterThanOrEqual(
+    buttonBox!.y + buttonBox!.height,
+  );
+  if (testInfo.project.name === "desktop") {
+    expect(popoverBox!.x + popoverBox!.width).toBeCloseTo(
+      buttonBox!.x + buttonBox!.width,
+      0,
+    );
+  } else {
+    await expectNoHorizontalOverflow(page);
+  }
+});
+
 test("positions the hovered title above its issue", async ({ page }) => {
   await loadSonar(page);
 

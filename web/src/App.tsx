@@ -23,6 +23,7 @@ export function App() {
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const [showContribution, setShowContribution] = useState(false);
   const contributeButtonRef = useRef<HTMLButtonElement>(null);
+  const contributionRef = useRef<HTMLDialogElement>(null);
   const [view, setView] = useState<ViewMode>("sonar");
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
 
@@ -42,6 +43,27 @@ export function App() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!showContribution) {
+      return;
+    }
+
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (
+        !contributionRef.current?.contains(target) &&
+        !contributeButtonRef.current?.contains(target)
+      ) {
+        setShowContribution(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", closeOnOutsidePointer);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsidePointer);
+    };
+  }, [showContribution]);
 
   const closeContribution = () => {
     setShowContribution(false);
@@ -67,6 +89,42 @@ export function App() {
   const newTechnologyUrl =
     `https://github.com/${state.snapshot.repository}/issues/new` +
     "?template=technology.yml";
+  const contribution = showContribution ? (
+    <dialog
+      aria-labelledby="contribute-heading"
+      className="contribution-popover"
+      id="contribution-popover"
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          closeContribution();
+        }
+      }}
+      open
+      ref={contributionRef}
+    >
+      <h2 id="contribute-heading">Contribute</h2>
+      <p>
+        You can add a technology by opening a{" "}
+        <a href={newTechnologyUrl} rel="noreferrer" target="_blank">
+          Technology issue
+        </a>{" "}
+        in the source repository.
+      </p>
+      <p>
+        See the{" "}
+        <a
+          href="https://github.com/sixfeetup/GH-Tech-Sonar/blob/main/docs/using-tech-sonar.md"
+          rel="noreferrer"
+          target="_blank"
+        >
+          Tech Sonar documentation
+        </a>.
+      </p>
+      <button autoFocus type="button" onClick={closeContribution}>
+        Close
+      </button>
+    </dialog>
+  ) : undefined;
 
   return (
     <main>
@@ -80,6 +138,7 @@ export function App() {
               </h1>
               <Filters
                 categories={categoriesFor(state.snapshot.items)}
+                contribution={contribution}
                 filters={filters}
                 onContribute={(trigger) => {
                   contributeButtonRef.current = trigger;
@@ -102,40 +161,6 @@ export function App() {
           element={<ItemDetails snapshot={state.snapshot} />}
         />
       </Routes>
-      {showContribution && (
-        <dialog
-          aria-labelledby="contribute-heading"
-          aria-modal="true"
-          onKeyDown={(event) => {
-            if (event.key === "Escape") {
-              closeContribution();
-            }
-          }}
-          open
-        >
-          <h2 id="contribute-heading">Contribute</h2>
-          <p>
-            You can add a technology by opening a{" "}
-            <a href={newTechnologyUrl} rel="noreferrer" target="_blank">
-              Technology issue
-            </a>{" "}
-            in the source repository.
-          </p>
-          <p>
-            See the{" "}
-            <a
-              href="https://github.com/sixfeetup/GH-Tech-Sonar/blob/main/docs/using-tech-sonar.md"
-              rel="noreferrer"
-              target="_blank"
-            >
-              Tech Sonar documentation
-            </a>.
-          </p>
-          <button autoFocus type="button" onClick={closeContribution}>
-            Close
-          </button>
-        </dialog>
-      )}
     </main>
   );
 }

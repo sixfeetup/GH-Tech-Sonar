@@ -86,10 +86,18 @@ describe("App loading", () => {
     const user = userEvent.setup();
     renderApp();
 
-    await user.click(
-      await screen.findByRole("button", { name: "Contribute" }),
-    );
+    const contribute = await screen.findByRole("button", {
+      name: "Contribute!",
+    });
+    expect(contribute).toHaveAttribute("aria-expanded", "false");
 
+    await user.click(contribute);
+
+    expect(contribute).toHaveAttribute("aria-expanded", "true");
+    expect(contribute).toHaveAttribute(
+      "aria-controls",
+      "contribution-popover",
+    );
     expect(screen.getByRole("dialog", { name: "Contribute" })).toBeVisible();
     const issueLink = screen.getByRole("link", { name: "Technology issue" });
     expect(issueLink).toHaveAttribute(
@@ -117,7 +125,7 @@ describe("App loading", () => {
     const user = userEvent.setup();
     renderApp();
     const contribute = await screen.findByRole("button", {
-      name: "Contribute",
+      name: "Contribute!",
     });
     await user.click(contribute);
 
@@ -135,7 +143,7 @@ describe("App loading", () => {
     const user = userEvent.setup();
     renderApp();
     const contribute = await screen.findByRole("button", {
-      name: "Contribute",
+      name: "Contribute!",
     });
     await user.click(contribute);
 
@@ -143,5 +151,25 @@ describe("App loading", () => {
 
     expect(screen.queryByRole("dialog", { name: "Contribute" })).toBeNull();
     expect(contribute).toHaveFocus();
+  });
+
+  it("closes contribution details when clicking outside", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(jsonResponse(snapshotFixture)),
+    );
+    const user = userEvent.setup();
+    renderApp();
+    await user.click(
+      await screen.findByRole("button", { name: "Contribute!" }),
+    );
+
+    await user.click(
+      screen.getByRole("heading", {
+        name: "sixfeetup/GH-Tech-Sonar: 1 items",
+      }),
+    );
+
+    expect(screen.queryByRole("dialog", { name: "Contribute" })).toBeNull();
   });
 });
