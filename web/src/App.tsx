@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Route, Routes } from "react-router-dom";
 
 import { loadSnapshot, type SonarSnapshot } from "./data/sonar";
@@ -21,6 +21,8 @@ type LoadState =
 
 export function App() {
   const [state, setState] = useState<LoadState>({ status: "loading" });
+  const [showContribution, setShowContribution] = useState(false);
+  const contributeButtonRef = useRef<HTMLButtonElement>(null);
   const [view, setView] = useState<ViewMode>("sonar");
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
 
@@ -41,6 +43,11 @@ export function App() {
     void load();
   }, [load]);
 
+  const closeContribution = () => {
+    setShowContribution(false);
+    contributeButtonRef.current?.focus();
+  };
+
   if (state.status === "loading") {
     return <main>Loading Tech Sonar…</main>;
   }
@@ -57,6 +64,9 @@ export function App() {
   }
 
   const filteredItems = filterItems(state.snapshot.items, filters);
+  const newTechnologyUrl =
+    `https://github.com/${state.snapshot.repository}/issues/new` +
+    "?template=technology.yml";
 
   return (
     <main>
@@ -71,6 +81,10 @@ export function App() {
               <Filters
                 categories={categoriesFor(state.snapshot.items)}
                 filters={filters}
+                onContribute={(trigger) => {
+                  contributeButtonRef.current = trigger;
+                  setShowContribution(true);
+                }}
                 onFiltersChange={setFilters}
                 onViewChange={setView}
                 view={view}
@@ -88,6 +102,40 @@ export function App() {
           element={<ItemDetails snapshot={state.snapshot} />}
         />
       </Routes>
+      {showContribution && (
+        <dialog
+          aria-labelledby="contribute-heading"
+          aria-modal="true"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              closeContribution();
+            }
+          }}
+          open
+        >
+          <h2 id="contribute-heading">Contribute</h2>
+          <p>
+            You can add a technology by opening a{" "}
+            <a href={newTechnologyUrl} rel="noreferrer" target="_blank">
+              Technology issue
+            </a>{" "}
+            in the source repository.
+          </p>
+          <p>
+            See the{" "}
+            <a
+              href="https://github.com/sixfeetup/GH-Tech-Sonar/blob/main/docs/using-tech-sonar.md"
+              rel="noreferrer"
+              target="_blank"
+            >
+              Tech Sonar documentation
+            </a>.
+          </p>
+          <button autoFocus type="button" onClick={closeContribution}>
+            Close
+          </button>
+        </dialog>
+      )}
     </main>
   );
 }

@@ -77,4 +77,71 @@ describe("App loading", () => {
     ).toBeVisible();
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
+
+  it("shows links for contributing to the source repository", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(jsonResponse(snapshotFixture)),
+    );
+    const user = userEvent.setup();
+    renderApp();
+
+    await user.click(
+      await screen.findByRole("button", { name: "Contribute" }),
+    );
+
+    expect(screen.getByRole("dialog", { name: "Contribute" })).toBeVisible();
+    const issueLink = screen.getByRole("link", { name: "Technology issue" });
+    expect(issueLink).toHaveAttribute(
+      "href",
+      "https://github.com/sixfeetup/GH-Tech-Sonar/issues/new?template=technology.yml",
+    );
+    const documentationLink = screen.getByRole("link", {
+      name: "Tech Sonar documentation",
+    });
+    expect(documentationLink).toHaveAttribute(
+      "href",
+      "https://github.com/sixfeetup/GH-Tech-Sonar/blob/main/docs/using-tech-sonar.md",
+    );
+    for (const link of [issueLink, documentationLink]) {
+      expect(link).toHaveAttribute("target", "_blank");
+      expect(link).toHaveAttribute("rel", "noreferrer");
+    }
+  });
+
+  it("closes contribution details and returns focus to Contribute", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(jsonResponse(snapshotFixture)),
+    );
+    const user = userEvent.setup();
+    renderApp();
+    const contribute = await screen.findByRole("button", {
+      name: "Contribute",
+    });
+    await user.click(contribute);
+
+    await user.click(screen.getByRole("button", { name: "Close" }));
+
+    expect(screen.queryByRole("dialog", { name: "Contribute" })).toBeNull();
+    expect(contribute).toHaveFocus();
+  });
+
+  it("closes contribution details with Escape", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(jsonResponse(snapshotFixture)),
+    );
+    const user = userEvent.setup();
+    renderApp();
+    const contribute = await screen.findByRole("button", {
+      name: "Contribute",
+    });
+    await user.click(contribute);
+
+    await user.keyboard("{Escape}");
+
+    expect(screen.queryByRole("dialog", { name: "Contribute" })).toBeNull();
+    expect(contribute).toHaveFocus();
+  });
 });

@@ -17,6 +17,7 @@ const statuses: Status[] = [
 interface FiltersProps {
   categories: string[];
   filters: FilterState;
+  onContribute: (trigger: HTMLButtonElement) => void;
   onFiltersChange: (filters: FilterState) => void;
   onViewChange: (view: ViewMode) => void;
   view: ViewMode;
@@ -25,6 +26,7 @@ interface FiltersProps {
 export function Filters({
   categories,
   filters,
+  onContribute,
   onFiltersChange,
   onViewChange,
   view,
@@ -101,6 +103,13 @@ export function Filters({
           ))}
         </select>
       </label>
+
+      <button
+        type="button"
+        onClick={(event) => onContribute(event.currentTarget)}
+      >
+        Contribute
+      </button>
     </section>
   );
 }

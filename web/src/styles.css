@@ -46,6 +46,7 @@ select {
 
 .controls input,
 .controls select,
+.controls > button,
 .view-toggle button {
   box-sizing: border-box;
   min-height: 2.5rem;
@@ -58,6 +59,10 @@ select {
 .controls select {
   max-width: 100%;
   padding: 0.4rem 0.6rem;
+}
+
+.controls > button {
+  padding: 0.4rem 0.8rem;
 }
 
 .view-toggle {
@@ -75,6 +80,27 @@ select {
 .view-toggle button[aria-pressed="true"] {
   background: #85e89d;
   color: #06170f;
+}
+
+dialog {
+  width: min(32rem, calc(100% - 4rem));
+  border: 1px solid #397654;
+  border-radius: 0.4rem;
+  background: #0a2117;
+  color: inherit;
+}
+
+dialog h2 {
+  margin-top: 0;
+}
+
+dialog button {
+  min-height: 2.5rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #397654;
+  background: #0b291c;
+  color: inherit;
+  font: inherit;
 }
 
 .sonar-list {

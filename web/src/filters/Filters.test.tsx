@@ -24,6 +24,7 @@ function ControlledFilters({
     <Filters
       categories={["AI", "WEB"]}
       filters={filters}
+      onContribute={vi.fn()}
       onFiltersChange={(nextFilters) => {
         onFiltersChange(nextFilters);
         setFilters(nextFilters);
@@ -43,6 +44,7 @@ describe("Filters", () => {
       <Filters
         categories={["AI", "WEB"]}
         filters={defaultFilters}
+        onContribute={vi.fn()}
         onFiltersChange={vi.fn()}
         onViewChange={vi.fn()}
         view="sonar"
@@ -55,6 +57,7 @@ describe("Filters", () => {
       screen.getByRole("combobox", { name: "Category" }),
       screen.getByLabelText("Updated since"),
       screen.getByRole("combobox", { name: "Status" }),
+      screen.getByRole("button", { name: "Contribute" }),
     ]);
   });
 
@@ -102,6 +105,7 @@ describe("Filters", () => {
       <Filters
         categories={["AI", "WEB"]}
         filters={defaultFilters}
+        onContribute={vi.fn()}
         onFiltersChange={vi.fn()}
         onViewChange={vi.fn()}
         view="sonar"
