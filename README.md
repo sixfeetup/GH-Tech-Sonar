@@ -25,8 +25,20 @@ configure [direnv](https://direnv.net/), then run `direnv allow`. Add local
 configuration or overrides to `.envrc-local`; it is loaded after devenv and is
 ignored by Git. Authentication remains your responsibility.
 
-See the [web application guide](web/README.md) for frontend development, test,
-and build commands.
+Run the same full validation used by CI from the repository root:
+
+```console
+devenv test
+```
+
+This runs Python tests, frontend tests/build, desktop/mobile browser tests, and
+checks the wheel's packaged resources. To run just the Python tests inside the
+environment, use `uv run --locked pytest`.
+
+See the [web application guide](web/README.md) for the managed development server
+and individual frontend commands. When updating dependencies, keep the npm
+Playwright version aligned with the Nix browser package; a mismatch prevents
+entry into the environment.
 
 ## GitHub authentication
 
@@ -47,12 +59,11 @@ needs these repository permissions:
 
 ## Install Tech Sonar
 
-From a Tech Sonar source checkout, install its dependencies and install the
+From the development environment in a Tech Sonar source checkout, install the
 managed files in a target GitHub repository:
 
 ```console
 # From a Tech Sonar source checkout
-uv sync
 uv run tech-sonar install OWNER/REPOSITORY
 ```
 

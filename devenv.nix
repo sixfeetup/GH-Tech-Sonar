@@ -11,7 +11,9 @@ in
   assertions = [
     {
       assertion = pkgs.playwright-driver.version == playwrightVersion;
-      message = "Nix Playwright ${pkgs.playwright-driver.version} must match npm Playwright ${playwrightVersion}; update the Nix input and npm lockfile together.";
+      message = "Nix Playwright ${pkgs.playwright-driver.version} must match "
+        + "npm Playwright ${playwrightVersion}; "
+        + "update the Nix input and npm lockfile together.";
     }
   ];
 
@@ -41,6 +43,23 @@ in
       cwd = "${config.devenv.root}/web";
     };
   };
+
+  enterTest = ''
+    set -euo pipefail
+    export CI=1
+    cd "${config.devenv.root}"
+    uv run --locked pytest
+    (
+      cd web
+      npm test
+      npm run build
+      npm run test:e2e
+    )
+    buildDir=$(mktemp -d)
+    trap 'rm -rf "$buildDir"' EXIT
+    uv build --out-dir "$buildDir"
+    python scripts/check-wheel.py "$buildDir"/*.whl
+  '';
 
   # Initialization tasks are non-fatal in devenv; installation must stop entry.
   enterShell = ''
