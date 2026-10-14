@@ -6,15 +6,32 @@ as a static snapshot.
 See [Use Tech Sonar](docs/using-tech-sonar.md) to browse the Sonar and manage
 technology issues.
 
-## Web application
+## Development environment
+
+Install [Nix](https://nixos.org/download/) and [devenv](https://devenv.sh/getting-started/),
+then enter the environment from this checkout:
+
+```console
+devenv shell
+```
+
+The environment provides Python, uv, Node.js/npm, Git, GitHub CLI, and the
+Chromium browsers used by Playwright. Python and npm dependencies are installed
+from their lockfiles automatically. No separate browser installation or sudo is
+needed.
+
+For automatic activation when entering the directory, optionally install and
+configure [direnv](https://direnv.net/), then run `direnv allow`. Add local
+configuration or overrides to `.envrc-local`; it is loaded after devenv and is
+ignored by Git. Authentication remains your responsibility.
 
 See the [web application guide](web/README.md) for frontend development, test,
 and build commands.
 
-## Prerequisites
+## GitHub authentication
 
-Install `git`, `gh`, and `uv`. Authenticate the GitHub CLI before running Tech
-Sonar locally:
+Within the development environment, authenticate the GitHub CLI before running
+Tech Sonar locally:
 
 ```console
 gh auth login
