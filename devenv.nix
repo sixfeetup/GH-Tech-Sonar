@@ -35,6 +35,13 @@ in
     PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1";
   };
 
+  processes = lib.optionalAttrs (!config.devenv.isTesting) {
+    web = {
+      exec = "npm run dev -- --host 127.0.0.1";
+      cwd = "${config.devenv.root}/web";
+    };
+  };
+
   # Initialization tasks are non-fatal in devenv; installation must stop entry.
   enterShell = ''
     uv sync --locked --python "${config.languages.python.package}/bin/python" || exit $?

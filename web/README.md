@@ -1,14 +1,27 @@
 # Tech Sonar web application
 
+Enter the [development environment](../README.md#development-environment)
+first; dependencies and Playwright browsers are provisioned automatically.
+
+From the repository root, start the managed development server:
+
 ```console
-npm install
-npm run dev
+devenv up
+```
+
+Open the local URL printed by Vite (normally `http://127.0.0.1:5173`). Stop the
+server with Ctrl-C. Vite reloads the application when frontend files change.
+
+To run individual checks, use these commands from `web/` inside the environment:
+
+```console
 npm test
 npm run test:e2e
 npm run build
 ```
 
-Run these commands from `web/`. The development server reads
+Browser tests start and stop their own server on port 4173, independently of the
+managed development server. The development server reads
 `public/sonar.json`, a generated fixture committed for local development. The
 production workflow replaces this fixture with a current snapshot before
 building the application.
