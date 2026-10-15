@@ -6,15 +6,44 @@ as a static snapshot.
 See [Use Tech Sonar](docs/using-tech-sonar.md) to browse the Sonar and manage
 technology issues.
 
-## Web application
+## Development environment
 
-See the [web application guide](web/README.md) for frontend development, test,
-and build commands.
+Install [Nix](https://nixos.org/download/) and [devenv](https://devenv.sh/getting-started/),
+then enter the environment from this checkout:
 
-## Prerequisites
+```console
+devenv shell
+```
 
-Install `git`, `gh`, and `uv`. Authenticate the GitHub CLI before running Tech
-Sonar locally:
+The environment provides Python, uv, Node.js/npm, Git, GitHub CLI, and the
+Chromium browsers used by Playwright. Python and npm dependencies are installed
+from their lockfiles automatically. No separate browser installation or sudo is
+needed.
+
+For automatic activation when entering the directory, optionally install and
+configure [direnv](https://direnv.net/), then run `direnv allow`. Add local
+configuration or overrides to `.envrc-local`; it is loaded after devenv and is
+ignored by Git. Authentication remains your responsibility.
+
+Run the same full validation used by CI from the repository root:
+
+```console
+devenv test
+```
+
+This runs Python tests, frontend tests/build, desktop/mobile browser tests, and
+checks the wheel's packaged resources. To run just the Python tests inside the
+environment, use `uv run --locked pytest`.
+
+See the [web application guide](web/README.md) for the managed development server
+and individual frontend commands. When updating dependencies, keep the npm
+Playwright version aligned with the Nix browser package; a mismatch prevents
+entry into the environment.
+
+## GitHub authentication
+
+Within the development environment, authenticate the GitHub CLI before running
+Tech Sonar locally:
 
 ```console
 gh auth login
@@ -30,12 +59,11 @@ needs these repository permissions:
 
 ## Install Tech Sonar
 
-From a Tech Sonar source checkout, install its dependencies and install the
+From the development environment in a Tech Sonar source checkout, install the
 managed files in a target GitHub repository:
 
 ```console
 # From a Tech Sonar source checkout
-uv sync
 uv run tech-sonar install OWNER/REPOSITORY
 ```
 
