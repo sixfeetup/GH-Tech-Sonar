@@ -4,9 +4,11 @@ async function loadSonar(page: Page) {
   await page.goto("/");
   await expect(
     page.getByRole("heading", {
-      name: "sixfeetup/GH-Tech-Sonar-Test: 7 items",
+      name: "Tech Sonar",
     }),
   ).toBeVisible();
+  // Web fonts change text widths, which resizes the legend and radar.
+  await page.evaluate(() => document.fonts.ready);
 }
 
 async function selectIssueFour(page: Page) {
@@ -129,32 +131,36 @@ test("matches each legend color to its radar band", async ({ page }) => {
   }
 });
 
-test("renders application surfaces with a dark theme", async ({ page }) => {
+test("renders application surfaces with the Six Feet Up brand theme", async ({
+  page,
+}) => {
   await loadSonar(page);
+
+  await expect(page.getByRole("img", { name: "Six Feet Up" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Tech Sonar" })).toBeVisible();
 
   const colors = await page.evaluate(() => ({
     background: getComputedStyle(document.body).backgroundColor,
     text: getComputedStyle(document.body).color,
-    control: getComputedStyle(document.querySelector("select")!).backgroundColor,
+    control: getComputedStyle(
+      document.querySelector<HTMLElement>(".controls label")!,
+    ).backgroundColor,
     legend: getComputedStyle(
       document.querySelector<HTMLElement>(".sonar-key")!,
     ).backgroundColor,
-    radar: getComputedStyle(
-      document.querySelector<SVGPathElement>(".sonar-band")!,
+    dot: getComputedStyle(
+      document.querySelector<SVGCircleElement>(".sonar-dot circle")!,
     ).fill,
   }));
   const channels = (color: string) =>
     color.match(/[\d.]+/g)!.slice(0, 3).map(Number);
 
-  for (const surface of [
-    colors.background,
-    colors.control,
-    colors.legend,
-    colors.radar,
-  ]) {
-    expect(Math.max(...channels(surface))).toBeLessThan(96);
+  for (const surface of [colors.background, colors.control, colors.legend]) {
+    expect(Math.min(...channels(surface))).toBeGreaterThan(200);
   }
-  expect(Math.min(...channels(colors.text))).toBeGreaterThan(160);
+  expect(Math.max(...channels(colors.text))).toBeLessThan(96);
+  // Dots use the Six Feet Up navy (#194457).
+  expect(channels(colors.dot)).toEqual([25, 68, 87]);
 });
 
 test("filters both views by category and status", async ({ page }) => {

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import type { SonarItem, Status } from "../data/sonar";
 import { ItemLink } from "../details/ItemLink";
+import { ItemCount } from "../list/ItemCount";
 import {
   layoutSonar,
   STATUS_ORDER,
@@ -15,6 +16,7 @@ function statusClass(status: Status): string {
 
 interface SonarViewProps {
   items: SonarItem[];
+  totalCount?: number;
 }
 
 interface Point {
@@ -63,7 +65,7 @@ function bandPath({ innerRadius, outerRadius }: SonarBand): string {
   ].join(" ");
 }
 
-export function SonarView({ items }: SonarViewProps) {
+export function SonarView({ items, totalCount }: SonarViewProps) {
   const plotRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(DEFAULT_SIZE);
   const [hoveredPlacement, setHoveredPlacement] =
@@ -199,17 +201,20 @@ export function SonarView({ items }: SonarViewProps) {
         )}
       </div>
 
-      <ul aria-label="Status bands" className="sonar-key">
-        {STATUS_ORDER.map((status) => (
-          <li key={status}>
-            <span
-              aria-hidden="true"
-              className={`sonar-key-swatch ${statusClass(status)}`}
-            />
-            {status}
-          </li>
-        ))}
-      </ul>
+      <div className="sonar-sidebar">
+        <ul aria-label="Status bands" className="sonar-key">
+          {STATUS_ORDER.map((status) => (
+            <li key={status}>
+              <span
+                aria-hidden="true"
+                className={`sonar-key-swatch ${statusClass(status)}`}
+              />
+              {status}
+            </li>
+          ))}
+        </ul>
+        <ItemCount shown={items.length} total={totalCount ?? items.length} />
+      </div>
     </section>
   );
 }
