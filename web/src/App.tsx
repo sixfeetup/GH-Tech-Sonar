@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Route, Routes } from "react-router-dom";
 
+import { SiteLayout } from "./branding/SiteChrome";
 import { loadSnapshot, type SonarSnapshot } from "./data/sonar";
 import { ItemDetails } from "./details/ItemDetails";
 import { Filters } from "./filters/Filters";
@@ -71,17 +72,26 @@ export function App() {
   };
 
   if (state.status === "loading") {
-    return <main>Loading Tech Sonar…</main>;
+    return (
+      <SiteLayout>
+        <div className="status-message" role="status">
+          <div aria-hidden="true" className="spinner" />
+          <p>Loading Tech Sonar…</p>
+        </div>
+      </SiteLayout>
+    );
   }
 
   if (state.status === "error") {
     return (
-      <main>
-        <p>Unable to load Tech Sonar: {state.message}</p>
-        <button type="button" onClick={load}>
-          Retry
-        </button>
-      </main>
+      <SiteLayout>
+        <div className="status-message">
+          <p>Unable to load Tech Sonar: {state.message}</p>
+          <button className="error-retry" type="button" onClick={load}>
+            Retry
+          </button>
+        </div>
+      </SiteLayout>
     );
   }
 
@@ -125,33 +135,47 @@ export function App() {
       </button>
     </dialog>
   ) : undefined;
+  const contributeControl = (
+    <div className="contribution-control">
+      <button
+        aria-controls="contribution-popover"
+        aria-expanded={showContribution}
+        className="contribute-toggle"
+        onClick={() => setShowContribution(true)}
+        ref={contributeButtonRef}
+        type="button"
+      >
+        Contribute!
+      </button>
+      {contribution}
+    </div>
+  );
 
   return (
-    <main>
+    <SiteLayout actions={contributeControl}>
       <Routes>
         <Route
           path="/"
           element={
             <>
-              <h1>
-                {state.snapshot.repository}: {state.snapshot.items.length} items
-              </h1>
+              <h1 className="visually-hidden">Tech Sonar</h1>
               <Filters
                 categories={categoriesFor(state.snapshot.items)}
-                contribution={contribution}
                 filters={filters}
-                onContribute={(trigger) => {
-                  contributeButtonRef.current = trigger;
-                  setShowContribution(true);
-                }}
                 onFiltersChange={setFilters}
                 onViewChange={setView}
                 view={view}
               />
               {view === "list" ? (
-                <ListView items={filteredItems} />
+                <ListView
+                  items={filteredItems}
+                  totalCount={state.snapshot.items.length}
+                />
               ) : (
-                <SonarView items={filteredItems} />
+                <SonarView
+                  items={filteredItems}
+                  totalCount={state.snapshot.items.length}
+                />
               )}
             </>
           }
@@ -161,6 +185,6 @@ export function App() {
           element={<ItemDetails snapshot={state.snapshot} />}
         />
       </Routes>
-    </main>
+    </SiteLayout>
   );
 }

@@ -72,7 +72,7 @@ describe("App loading", () => {
 
     expect(
       await screen.findByRole("heading", {
-        name: "sixfeetup/GH-Tech-Sonar: 1 items",
+        name: "Tech Sonar",
       }),
     ).toBeVisible();
     expect(fetcher).toHaveBeenCalledTimes(2);
@@ -166,7 +166,7 @@ describe("App loading", () => {
 
     await user.click(
       screen.getByRole("heading", {
-        name: "sixfeetup/GH-Tech-Sonar: 1 items",
+        name: "Tech Sonar",
       }),
     );
 
